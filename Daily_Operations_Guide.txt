@@ -1,0 +1,175 @@
+DAILY OPERATIONS QUICK REFERENCE GUIDE
+======================================
+
+MORNING STARTUP ROUTINE (5 minutes)
+-----------------------------------
+1. Open Dashboard sheet - Check:
+   ✓ Daily revenue target progress
+   ✓ Work orders scheduled for today  
+   ✓ Parts inventory alerts
+   ✓ Overdue payments requiring follow-up
+
+2. Check Schedule sheet:
+   ✓ Confirm all appointments are staffed
+   ✓ Verify bay assignments
+   ✓ Contact customers for confirmations if needed
+
+NEW CUSTOMER PROCESS
+-------------------
+1. Go to Clients sheet
+2. Add new row with next Client_ID (C###)
+3. Fill all contact information
+4. Go to Vehicles sheet  
+5. Add vehicle with next Vehicle_ID (V###)
+6. Link to Client_ID
+
+NEW WORK ORDER PROCESS  
+---------------------
+1. Go to WorkOrders sheet
+2. Create new Work_Order_ID (WO###)
+3. Link Client_ID and Vehicle_ID
+4. Enter customer complaint/request
+5. Assign technician and estimated hours
+6. Set status to "Scheduled"
+7. Update Schedule sheet with appointment
+
+COMPLETING A WORK ORDER
+-----------------------
+1. Update WorkOrders sheet:
+   ✓ Change status to "Completed"
+   ✓ Enter actual hours worked
+   ✓ List parts used (by Part_ID)
+   ✓ Add completion notes
+
+2. Go to FinancialTracking sheet:
+   ✓ Create invoice entry
+   ✓ Calculate labor + parts + tax
+   ✓ Set payment terms
+
+3. Update PartsInventory:
+   ✓ Reduce quantity for used parts
+   ✓ Check if reorder point reached
+
+PARTS MANAGEMENT
+---------------
+RECEIVING NEW PARTS:
+1. Go to PartsInventory sheet
+2. Update Quantity_OnHand  
+3. Update Last_Ordered date
+4. Check if any back-orders can be fulfilled
+
+CHECKING PARTS BEFORE SERVICE:
+1. Filter PartsInventory by Part_ID
+2. Verify sufficient quantity
+3. If low stock, check Reorder_Point
+4. Order if needed or find alternatives
+
+DAILY CLOSING ROUTINE
+---------------------
+1. Update Dashboard:
+   ✓ Verify daily revenue total
+   ✓ Mark completed work orders
+   ✓ Update payment statuses
+
+2. Review tomorrow's schedule:
+   ✓ Confirm all appointments  
+   ✓ Prepare any special parts needed
+   ✓ Assign technician specialties
+
+3. Check alerts:
+   ✓ Low inventory items
+   ✓ Overdue payments
+   ✓ Warranty expirations
+
+COMMON SEARCHES/FILTERS
+----------------------
+FIND CUSTOMER HISTORY:
+1. Go to WorkOrders sheet
+2. Filter by Client_ID
+3. Sort by Date_Received (newest first)
+
+FIND VEHICLE SERVICE HISTORY:
+1. Go to WorkOrders sheet  
+2. Filter by Vehicle_ID
+3. Review all previous services
+
+CHECK PART AVAILABILITY:
+1. Go to PartsInventory sheet
+2. Filter by Part_ID or Description
+3. Check Quantity_OnHand vs needed
+
+FIND OVERDUE PAYMENTS:
+1. Go to FinancialTracking sheet
+2. Filter Payment_Status = "Overdue"
+3. Sort by Days_Overdue (highest first)
+
+WEEKLY REPORTS TO RUN
+--------------------
+EVERY MONDAY:
+- Revenue by Technician (last week)
+- Parts reorder list
+- Customer follow-up list
+- Schedule capacity for current week
+
+EVERY FRIDAY:  
+- Week's financial summary
+- Completed vs scheduled work orders
+- Customer satisfaction follow-ups
+- Next week's preparation checklist
+
+TROUBLESHOOTING COMMON ISSUES
+-----------------------------
+FORMULA ERRORS:
+- Check table names match exactly
+- Verify Client_ID/Vehicle_ID links exist
+- Refresh pivot tables after data changes
+
+MISSING DROPDOWN OPTIONS:
+- Check data validation source ranges
+- Add new options to validation lists
+- Update list references in formulas
+
+PRINTING ISSUES:
+- Set print areas for each sheet
+- Use Page Layout view for invoice formatting
+- Hide unnecessary columns before printing
+
+MONTHLY MAINTENANCE TASKS
+-------------------------
+1. Archive completed work orders older than 6 months
+2. Review and update service pricing
+3. Analyze top customers and services
+4. Update parts supplier information
+5. Back up entire workbook with date stamp
+6. Review and update staff performance metrics
+
+KEYBOARD SHORTCUTS
+------------------
+Ctrl+T = Create Table
+Ctrl+F = Find/Search
+Ctrl+H = Find and Replace  
+Alt+D+F+F = Add Filter
+F2 = Edit Cell
+Ctrl+Shift+L = Toggle Filters
+Ctrl+; = Insert Today's Date
+Ctrl+Shift+: = Insert Current Time
+
+EMERGENCY PROCEDURES
+-------------------
+SYSTEM CRASH/CORRUPTION:
+1. Restore from most recent backup
+2. Re-enter any data since backup
+3. Verify all formulas still working
+4. Create new backup immediately
+
+WRONG DATA ENTRY:
+1. Use Ctrl+Z to undo if caught immediately  
+2. Find and correct in source sheet
+3. Verify related calculations updated
+4. Check dependent sheets for impacts
+
+CUSTOMER COMPLAINT ESCALATION:
+1. Log in WorkOrders notes immediately
+2. Create follow-up entry in Schedule
+3. Flag for management review
+4. Document resolution actions taken

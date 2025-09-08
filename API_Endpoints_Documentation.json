@@ -1,0 +1,1080 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mechanics Shop Management System API",
+    "version": "1.0.0",
+    "description": "RESTful API for comprehensive auto repair shop management",
+    "contact": {
+      "name": "API Support",
+      "email": "api@mechanicsshop.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.mechanicsshop.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.mechanicsshop.com/v1",
+      "description": "Staging server"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register new user account",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string", "minLength": 8},
+                  "firstName": {"type": "string"},
+                  "lastName": {"type": "string"},
+                  "phone": {"type": "string"},
+                  "shopName": {"type": "string"},
+                  "subscriptionTier": {"type": "string", "enum": ["starter", "professional", "enterprise"]}
+                },
+                "required": ["email", "password", "firstName", "lastName", "shopName"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"},
+                    "shop": {"$ref": "#/components/schemas/Shop"},
+                    "tokens": {"$ref": "#/components/schemas/AuthTokens"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Invalid input data"},
+          "409": {"description": "Email already exists"}
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "User login",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string"}
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"},
+                    "shops": {"type": "array", "items": {"$ref": "#/components/schemas/Shop"}},
+                    "tokens": {"$ref": "#/components/schemas/AuthTokens"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Invalid credentials"}
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {"type": "string"}
+                },
+                "required": ["refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/AuthTokens"}
+              }
+            }
+          },
+          "401": {"description": "Invalid refresh token"}
+        }
+      }
+    },
+    "/shops/{shopId}/clients": {
+      "get": {
+        "summary": "Get all clients for a shop",
+        "tags": ["Clients"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/page"},
+          {"$ref": "#/components/parameters/limit"},
+          {"name": "search", "in": "query", "schema": {"type": "string"}, "description": "Search by name, phone, or email"}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of clients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "clients": {"type": "array", "items": {"$ref": "#/components/schemas/Client"}},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new client",
+        "tags": ["Clients"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/shopId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ClientCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Client"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/clients/{clientId}": {
+      "get": {
+        "summary": "Get client by ID",
+        "tags": ["Clients"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/clientId"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Client details",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Client"}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update client",
+        "tags": ["Clients"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/clientId"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ClientUpdate"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Client"}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete client",
+        "tags": ["Clients"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/clientId"}
+        ],
+        "responses": {
+          "204": {"description": "Client deleted"}
+        }
+      }
+    },
+    "/shops/{shopId}/vehicles": {
+      "get": {
+        "summary": "Get all vehicles for a shop",
+        "tags": ["Vehicles"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/page"},
+          {"$ref": "#/components/parameters/limit"},
+          {"name": "clientId", "in": "query", "schema": {"type": "string"}, "description": "Filter by client"}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of vehicles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "vehicles": {"type": "array", "items": {"$ref": "#/components/schemas/Vehicle"}},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new vehicle",
+        "tags": ["Vehicles"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/shopId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehicleCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Vehicle"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/work-orders": {
+      "get": {
+        "summary": "Get all work orders for a shop",
+        "tags": ["Work Orders"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/page"},
+          {"$ref": "#/components/parameters/limit"},
+          {"name": "status", "in": "query", "schema": {"type": "string"}, "description": "Filter by status"},
+          {"name": "technicianId", "in": "query", "schema": {"type": "string"}, "description": "Filter by technician"},
+          {"name": "dateFrom", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Filter from date"},
+          {"name": "dateTo", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Filter to date"}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of work orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workOrders": {"type": "array", "items": {"$ref": "#/components/schemas/WorkOrder"}},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new work order",
+        "tags": ["Work Orders"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/shopId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/WorkOrderCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Work order created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/WorkOrder"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/parts": {
+      "get": {
+        "summary": "Get all parts inventory for a shop",
+        "tags": ["Parts"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/page"},
+          {"$ref": "#/components/parameters/limit"},
+          {"name": "category", "in": "query", "schema": {"type": "string"}, "description": "Filter by category"},
+          {"name": "lowStock", "in": "query", "schema": {"type": "boolean"}, "description": "Show only low stock items"}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of parts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parts": {"type": "array", "items": {"$ref": "#/components/schemas/Part"}},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new part",
+        "tags": ["Parts"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/shopId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/PartCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Part created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Part"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/schedules": {
+      "get": {
+        "summary": "Get schedule for a shop",
+        "tags": ["Schedule"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"name": "date", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Specific date"},
+          {"name": "dateFrom", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Date range start"},
+          {"name": "dateTo", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Date range end"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schedules": {"type": "array", "items": {"$ref": "#/components/schemas/Schedule"}},
+                    "availability": {"type": "array", "items": {"$ref": "#/components/schemas/TimeSlot"}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new appointment",
+        "tags": ["Schedule"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/shopId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ScheduleCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Appointment scheduled",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Schedule"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/financial": {
+      "get": {
+        "summary": "Get financial transactions for a shop",
+        "tags": ["Financial"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"$ref": "#/components/parameters/page"},
+          {"$ref": "#/components/parameters/limit"},
+          {"name": "status", "in": "query", "schema": {"type": "string"}, "description": "Payment status filter"},
+          {"name": "dateFrom", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Date range start"},
+          {"name": "dateTo", "in": "query", "schema": {"type": "string", "format": "date"}, "description": "Date range end"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Financial transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transactions": {"type": "array", "items": {"$ref": "#/components/schemas/FinancialTransaction"}},
+                    "summary": {"$ref": "#/components/schemas/FinancialSummary"},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/reports/dashboard": {
+      "get": {
+        "summary": "Get dashboard KPIs and metrics",
+        "tags": ["Reports"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"name": "period", "in": "query", "schema": {"type": "string", "enum": ["today", "week", "month", "quarter", "year"]}, "description": "Time period for metrics"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard metrics",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DashboardMetrics"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shops/{shopId}/reports/revenue": {
+      "get": {
+        "summary": "Get revenue analysis report",
+        "tags": ["Reports"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/shopId"},
+          {"name": "dateFrom", "in": "query", "schema": {"type": "string", "format": "date"}, "required": true},
+          {"name": "dateTo", "in": "query", "schema": {"type": "string", "format": "date"}, "required": true},
+          {"name": "groupBy", "in": "query", "schema": {"type": "string", "enum": ["day", "week", "month"]}, "description": "Grouping period"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Revenue analysis",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/RevenueReport"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "shopId": {
+        "name": "shopId",
+        "in": "path",
+        "required": true,
+        "schema": {"type": "string", "format": "uuid"},
+        "description": "Shop identifier"
+      },
+      "clientId": {
+        "name": "clientId",
+        "in": "path",
+        "required": true,
+        "schema": {"type": "string", "format": "uuid"},
+        "description": "Client identifier"
+      },
+      "page": {
+        "name": "page",
+        "in": "query",
+        "schema": {"type": "integer", "minimum": 1, "default": 1},
+        "description": "Page number for pagination"
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
+        "description": "Number of items per page"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "email": {"type": "string", "format": "email"},
+          "firstName": {"type": "string"},
+          "lastName": {"type": "string"},
+          "phone": {"type": "string"},
+          "role": {"type": "string", "enum": ["owner", "manager", "technician", "staff"]},
+          "isActive": {"type": "boolean"},
+          "emailVerified": {"type": "boolean"},
+          "lastLogin": {"type": "string", "format": "date-time"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Shop": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "name": {"type": "string"},
+          "address": {"type": "string"},
+          "city": {"type": "string"},
+          "state": {"type": "string"},
+          "zipCode": {"type": "string"},
+          "phone": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "taxRate": {"type": "number", "format": "decimal"},
+          "laborRate": {"type": "number", "format": "decimal"},
+          "bayCount": {"type": "integer"},
+          "subscriptionTier": {"type": "string", "enum": ["starter", "professional", "enterprise"]},
+          "isActive": {"type": "boolean"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "AuthTokens": {
+        "type": "object",
+        "properties": {
+          "accessToken": {"type": "string"},
+          "refreshToken": {"type": "string"},
+          "expiresIn": {"type": "integer"}
+        }
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "clientId": {"type": "string"},
+          "firstName": {"type": "string"},
+          "lastName": {"type": "string"},
+          "companyName": {"type": "string"},
+          "phone": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "address": {"type": "string"},
+          "city": {"type": "string"},
+          "state": {"type": "string"},
+          "zipCode": {"type": "string"},
+          "paymentTerms": {"type": "string", "enum": ["COD", "Net 15", "Net 30"]},
+          "creditLimit": {"type": "number", "format": "decimal"},
+          "customerNotes": {"type": "string"},
+          "preferredContact": {"type": "string", "enum": ["phone", "email", "text"]},
+          "emergencyContact": {"type": "string"},
+          "emergencyPhone": {"type": "string"},
+          "isActive": {"type": "boolean"},
+          "vehicleCount": {"type": "integer"},
+          "totalSpent": {"type": "number", "format": "decimal"},
+          "lastServiceDate": {"type": "string", "format": "date"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ClientCreate": {
+        "type": "object",
+        "properties": {
+          "firstName": {"type": "string"},
+          "lastName": {"type": "string"},
+          "companyName": {"type": "string"},
+          "phone": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "address": {"type": "string"},
+          "city": {"type": "string"},
+          "state": {"type": "string"},
+          "zipCode": {"type": "string"},
+          "paymentTerms": {"type": "string", "enum": ["COD", "Net 15", "Net 30"]},
+          "creditLimit": {"type": "number", "format": "decimal"},
+          "customerNotes": {"type": "string"},
+          "preferredContact": {"type": "string", "enum": ["phone", "email", "text"]},
+          "emergencyContact": {"type": "string"},
+          "emergencyPhone": {"type": "string"}
+        },
+        "required": ["firstName", "lastName", "phone"]
+      },
+      "ClientUpdate": {
+        "allOf": [{"$ref": "#/components/schemas/ClientCreate"}]
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "vehicleId": {"type": "string"},
+          "clientId": {"type": "string", "format": "uuid"},
+          "vin": {"type": "string"},
+          "make": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "licensePlate": {"type": "string"},
+          "currentMileage": {"type": "integer"},
+          "engineType": {"type": "string"},
+          "transmission": {"type": "string"},
+          "color": {"type": "string"},
+          "lastServiceDate": {"type": "string", "format": "date"},
+          "nextServiceDue": {"type": "string", "format": "date"},
+          "insuranceCompany": {"type": "string"},
+          "policyNumber": {"type": "string"},
+          "notes": {"type": "string"},
+          "client": {"$ref": "#/components/schemas/Client"},
+          "serviceHistory": {"type": "array", "items": {"$ref": "#/components/schemas/WorkOrder"}},
+          "isActive": {"type": "boolean"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "VehicleCreate": {
+        "type": "object",
+        "properties": {
+          "clientId": {"type": "string", "format": "uuid"},
+          "vin": {"type": "string"},
+          "make": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "licensePlate": {"type": "string"},
+          "currentMileage": {"type": "integer"},
+          "engineType": {"type": "string"},
+          "transmission": {"type": "string"},
+          "color": {"type": "string"},
+          "insuranceCompany": {"type": "string"},
+          "policyNumber": {"type": "string"},
+          "notes": {"type": "string"}
+        },
+        "required": ["clientId", "make", "model", "year"]
+      },
+      "WorkOrder": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "workOrderId": {"type": "string"},
+          "clientId": {"type": "string", "format": "uuid"},
+          "vehicleId": {"type": "string", "format": "uuid"},
+          "dateReceived": {"type": "string", "format": "date-time"},
+          "datePromised": {"type": "string", "format": "date-time"},
+          "dateCompleted": {"type": "string", "format": "date-time"},
+          "mileageIn": {"type": "integer"},
+          "mileageOut": {"type": "integer"},
+          "serviceWriterId": {"type": "string", "format": "uuid"},
+          "technicianId": {"type": "string", "format": "uuid"},
+          "customerComplaint": {"type": "string"},
+          "servicesPerformed": {"type": "string"},
+          "laborHours": {"type": "number", "format": "decimal"},
+          "laborCost": {"type": "number", "format": "decimal"},
+          "partsCost": {"type": "number", "format": "decimal"},
+          "taxAmount": {"type": "number", "format": "decimal"},
+          "totalCost": {"type": "number", "format": "decimal"},
+          "status": {"type": "string", "enum": ["scheduled", "in_progress", "waiting_parts", "waiting_approval", "completed", "picked_up", "cancelled"]},
+          "authorizationAmount": {"type": "number", "format": "decimal"},
+          "paymentStatus": {"type": "string", "enum": ["pending", "partial", "paid", "refunded"]},
+          "bayNumber": {"type": "string"},
+          "priorityLevel": {"type": "string", "enum": ["routine", "high", "urgent", "emergency"]},
+          "notes": {"type": "string"},
+          "client": {"$ref": "#/components/schemas/Client"},
+          "vehicle": {"$ref": "#/components/schemas/Vehicle"},
+          "technician": {"$ref": "#/components/schemas/User"},
+          "serviceWriter": {"$ref": "#/components/schemas/User"},
+          "partsUsed": {"type": "array", "items": {"$ref": "#/components/schemas/WorkOrderPart"}},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "WorkOrderCreate": {
+        "type": "object",
+        "properties": {
+          "clientId": {"type": "string", "format": "uuid"},
+          "vehicleId": {"type": "string", "format": "uuid"},
+          "datePromised": {"type": "string", "format": "date-time"},
+          "mileageIn": {"type": "integer"},
+          "serviceWriterId": {"type": "string", "format": "uuid"},
+          "technicianId": {"type": "string", "format": "uuid"},
+          "customerComplaint": {"type": "string"},
+          "authorizationAmount": {"type": "number", "format": "decimal"},
+          "bayNumber": {"type": "string"},
+          "priorityLevel": {"type": "string", "enum": ["routine", "high", "urgent", "emergency"]},
+          "notes": {"type": "string"}
+        },
+        "required": ["clientId", "vehicleId", "customerComplaint"]
+      },
+      "WorkOrderPart": {
+        "type": "object",
+        "properties": {
+          "partId": {"type": "string", "format": "uuid"},
+          "quantityUsed": {"type": "integer"},
+          "unitCost": {"type": "number", "format": "decimal"},
+          "totalCost": {"type": "number", "format": "decimal"},
+          "part": {"$ref": "#/components/schemas/Part"}
+        }
+      },
+      "Part": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "partId": {"type": "string"},
+          "partNumber": {"type": "string"},
+          "description": {"type": "string"},
+          "category": {"type": "string"},
+          "supplier": {"type": "string"},
+          "supplierPartNumber": {"type": "string"},
+          "costPrice": {"type": "number", "format": "decimal"},
+          "sellingPrice": {"type": "number", "format": "decimal"},
+          "markupPercent": {"type": "number", "format": "decimal"},
+          "quantityOnHand": {"type": "integer"},
+          "minStockLevel": {"type": "integer"},
+          "maxStockLevel": {"type": "integer"},
+          "reorderPoint": {"type": "integer"},
+          "reorderQuantity": {"type": "integer"},
+          "location": {"type": "string"},
+          "lastOrdered": {"type": "string", "format": "date"},
+          "lastSold": {"type": "string", "format": "date"},
+          "turnRateAnnual": {"type": "integer"},
+          "stockStatus": {"type": "string", "enum": ["in_stock", "low_stock", "reorder_needed", "out_of_stock"]},
+          "isActive": {"type": "boolean"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "PartCreate": {
+        "type": "object",
+        "properties": {
+          "partNumber": {"type": "string"},
+          "description": {"type": "string"},
+          "category": {"type": "string"},
+          "supplier": {"type": "string"},
+          "supplierPartNumber": {"type": "string"},
+          "costPrice": {"type": "number", "format": "decimal"},
+          "sellingPrice": {"type": "number", "format": "decimal"},
+          "quantityOnHand": {"type": "integer"},
+          "minStockLevel": {"type": "integer"},
+          "maxStockLevel": {"type": "integer"},
+          "reorderPoint": {"type": "integer"},
+          "reorderQuantity": {"type": "integer"},
+          "location": {"type": "string"}
+        },
+        "required": ["partNumber", "description", "category", "costPrice", "sellingPrice"]
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "scheduleId": {"type": "string"},
+          "workOrderId": {"type": "string", "format": "uuid"},
+          "clientId": {"type": "string", "format": "uuid"},
+          "vehicleId": {"type": "string", "format": "uuid"},
+          "appointmentDate": {"type": "string", "format": "date"},
+          "appointmentTime": {"type": "string", "format": "time"},
+          "estimatedDurationHours": {"type": "number", "format": "decimal"},
+          "bayNumber": {"type": "string"},
+          "technicianAssignedId": {"type": "string", "format": "uuid"},
+          "serviceWriterId": {"type": "string", "format": "uuid"},
+          "priorityLevel": {"type": "string", "enum": ["routine", "high", "urgent", "emergency"]},
+          "status": {"type": "string", "enum": ["scheduled", "confirmed", "in_progress", "completed", "no_show", "cancelled", "rescheduled"]},
+          "customerNotified": {"type": "boolean"},
+          "arrivalTime": {"type": "string", "format": "date-time"},
+          "startTime": {"type": "string", "format": "date-time"},
+          "estimatedCompletion": {"type": "string", "format": "date-time"},
+          "actualCompletion": {"type": "string", "format": "date-time"},
+          "notes": {"type": "string"},
+          "client": {"$ref": "#/components/schemas/Client"},
+          "vehicle": {"$ref": "#/components/schemas/Vehicle"},
+          "technician": {"$ref": "#/components/schemas/User"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ScheduleCreate": {
+        "type": "object",
+        "properties": {
+          "workOrderId": {"type": "string", "format": "uuid"},
+          "clientId": {"type": "string", "format": "uuid"},
+          "vehicleId": {"type": "string", "format": "uuid"},
+          "appointmentDate": {"type": "string", "format": "date"},
+          "appointmentTime": {"type": "string", "format": "time"},
+          "estimatedDurationHours": {"type": "number", "format": "decimal"},
+          "bayNumber": {"type": "string"},
+          "technicianAssignedId": {"type": "string", "format": "uuid"},
+          "priorityLevel": {"type": "string", "enum": ["routine", "high", "urgent", "emergency"]},
+          "notes": {"type": "string"}
+        },
+        "required": ["clientId", "vehicleId", "appointmentDate", "appointmentTime"]
+      },
+      "TimeSlot": {
+        "type": "object",
+        "properties": {
+          "date": {"type": "string", "format": "date"},
+          "time": {"type": "string", "format": "time"},
+          "available": {"type": "boolean"},
+          "bayNumber": {"type": "string"},
+          "technicianId": {"type": "string", "format": "uuid"}
+        }
+      },
+      "FinancialTransaction": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "transactionId": {"type": "string"},
+          "workOrderId": {"type": "string", "format": "uuid"},
+          "clientId": {"type": "string", "format": "uuid"},
+          "invoiceDate": {"type": "string", "format": "date-time"},
+          "invoiceNumber": {"type": "string"},
+          "description": {"type": "string"},
+          "laborCost": {"type": "number", "format": "decimal"},
+          "partsCost": {"type": "number", "format": "decimal"},
+          "subtotal": {"type": "number", "format": "decimal"},
+          "taxRate": {"type": "number", "format": "decimal"},
+          "taxAmount": {"type": "number", "format": "decimal"},
+          "totalAmount": {"type": "number", "format": "decimal"},
+          "paymentMethod": {"type": "string", "enum": ["cash", "check", "credit_card", "debit_card", "ach", "other"]},
+          "paymentDate": {"type": "string", "format": "date-time"},
+          "amountPaid": {"type": "number", "format": "decimal"},
+          "balanceDue": {"type": "number", "format": "decimal"},
+          "paymentStatus": {"type": "string", "enum": ["pending", "partial", "paid", "overdue", "refunded"]},
+          "dueDate": {"type": "string", "format": "date-time"},
+          "discountApplied": {"type": "number", "format": "decimal"},
+          "refundAmount": {"type": "number", "format": "decimal"},
+          "daysOverdue": {"type": "integer"},
+          "notes": {"type": "string"},
+          "client": {"$ref": "#/components/schemas/Client"},
+          "workOrder": {"$ref": "#/components/schemas/WorkOrder"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "FinancialSummary": {
+        "type": "object",
+        "properties": {
+          "totalRevenue": {"type": "number", "format": "decimal"},
+          "totalCollected": {"type": "number", "format": "decimal"},
+          "totalOutstanding": {"type": "number", "format": "decimal"},
+          "overdueAmount": {"type": "number", "format": "decimal"},
+          "overdueCount": {"type": "integer"},
+          "avgTicketValue": {"type": "number", "format": "decimal"},
+          "profitMargin": {"type": "number", "format": "decimal"}
+        }
+      },
+      "DashboardMetrics": {
+        "type": "object",
+        "properties": {
+          "kpis": {
+            "type": "object",
+            "properties": {
+              "dailyRevenue": {"type": "number", "format": "decimal"},
+              "monthlyRevenue": {"type": "number", "format": "decimal"},
+              "workOrdersToday": {"type": "integer"},
+              "workOrdersInProgress": {"type": "integer"},
+              "pendingAppointments": {"type": "integer"},
+              "overdueInvoices": {"type": "integer"},
+              "partsLowStock": {"type": "integer"},
+              "customerSatisfaction": {"type": "number", "format": "decimal"},
+              "avgLaborHours": {"type": "number", "format": "decimal"},
+              "profitMargin": {"type": "number", "format": "decimal"}
+            }
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string", "enum": ["low_inventory", "overdue_payment", "schedule_conflict", "maintenance"]},
+                "message": {"type": "string"},
+                "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+                "actionRequired": {"type": "boolean"},
+                "actionUrl": {"type": "string"}
+              }
+            }
+          },
+          "recentActivity": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "description": {"type": "string"},
+                "timestamp": {"type": "string", "format": "date-time"},
+                "userId": {"type": "string", "format": "uuid"},
+                "relatedId": {"type": "string", "format": "uuid"}
+              }
+            }
+          }
+        }
+      },
+      "RevenueReport": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalRevenue": {"type": "number", "format": "decimal"},
+              "totalTransactions": {"type": "integer"},
+              "avgTransactionValue": {"type": "number", "format": "decimal"},
+              "growth": {"type": "number", "format": "decimal"}
+            }
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "period": {"type": "string"},
+                "revenue": {"type": "number", "format": "decimal"},
+                "transactions": {"type": "integer"},
+                "laborRevenue": {"type": "number", "format": "decimal"},
+                "partsRevenue": {"type": "number", "format": "decimal"}
+              }
+            }
+          },
+          "topServices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "serviceName": {"type": "string"},
+                "revenue": {"type": "number", "format": "decimal"},
+                "count": {"type": "integer"}
+              }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {"type": "integer"},
+          "limit": {"type": "integer"},
+          "total": {"type": "integer"},
+          "pages": {"type": "integer"},
+          "hasNext": {"type": "boolean"},
+          "hasPrev": {"type": "boolean"}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "message": {"type": "string"},
+          "details": {"type": "object"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - invalid input data",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - invalid or missing authentication",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      }
+    }
+  }
+}

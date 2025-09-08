@@ -1,0 +1,16 @@
+Service_ID,Service_Name,Category,Description,Estimated_Hours,Labor_Rate_Hour,Base_Labor_Cost,Typical_Parts_Needed,Estimated_Parts_Cost,Total_Estimated_Cost,Service_Interval_Miles,Service_Interval_Months,Warranty_Miles,Warranty_Months
+S001,Oil Change Standard,Maintenance,Engine oil and filter change,1.0,50.00,50.00,P001;P002,42.50,92.50,5000,6,3000,3
+S002,Oil Change Synthetic,Maintenance,Synthetic oil and filter change,1.0,50.00,50.00,P001;P002,45.00,95.00,7500,6,5000,6
+S003,Brake Pads Front,Brakes,Front brake pads replacement,2.5,50.00,125.00,P003;P004,98.00,223.00,30000,24,12000,12
+S004,Brake Pads Rear,Brakes,Rear brake pads replacement,2.0,50.00,100.00,P003;P004,98.00,198.00,30000,24,12000,12
+S005,Complete Brake Service,Brakes,Front and rear brake service,4.5,50.00,225.00,P003;P004,196.00,421.00,30000,24,12000,12
+S006,Transmission Service,Transmission,Transmission fluid and filter change,4.0,50.00,200.00,P006;P007,112.00,312.00,50000,48,15000,12
+S007,Coolant Flush,Cooling,Complete cooling system flush,2.0,50.00,100.00,P010,26.50,126.50,50000,48,12000,12
+S008,Tune-Up Basic,Maintenance,Spark plugs and air filter,1.5,50.00,75.00,P008;P009,128.95,203.95,30000,36,12000,12
+S009,State Inspection,Legal,Annual state safety inspection,0.5,50.00,25.00,,0.00,25.00,12000,12,0,0
+S010,Diagnostic Service,Diagnostic,Computer diagnostic scan,1.0,50.00,50.00,,0.00,50.00,0,0,0,1
+S011,A/C Service,Climate,Air conditioning service and recharge,1.5,50.00,75.00,,45.00,120.00,24000,24,6000,6
+S012,Battery Test Replace,Electrical,Battery testing and replacement,0.5,50.00,25.00,,125.00,150.00,48000,48,12000,12
+S013,Tire Rotation,Tires,Four-wheel tire rotation,0.5,50.00,25.00,,0.00,25.00,7500,6,0,0
+S014,Wheel Alignment,Tires,Four-wheel computer alignment,1.0,50.00,50.00,,0.00,50.00,12000,12,6000,6
+S015,Engine Rebuild,Major,Complete engine rebuild,40.0,50.00,2000.00,,1500.00,3500.00,100000,120,50000,36

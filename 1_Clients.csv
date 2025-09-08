@@ -1,0 +1,4 @@
+Client_ID,First_Name,Last_Name,Phone,Email,Address,City,State,ZIP,Registration_Date,Payment_Terms,Credit_Limit,Customer_Notes,Preferred_Contact,Emergency_Contact,Emergency_Phone
+C001,John,Smith,555-0123,john.smith@email.com,123 Main St,Anytown,ST,12345,2024-01-15,Net 30,2000,Regular customer - prefers morning appointments,Phone,Jane Smith,555-0124
+C002,Maria,Garcia,555-0456,maria.garcia@email.com,456 Oak Ave,Anytown,ST,12346,2024-02-01,COD,500,Fleet manager for ABC Company,Email,Carlos Garcia,555-0457
+C003,Robert,Johnson,555-0789,bob.johnson@email.com,789 Pine Rd,Anytown,ST,12347,2024-02-15,Net 15,1500,Senior customer discount applies,Phone,Mary Johnson,555-0790

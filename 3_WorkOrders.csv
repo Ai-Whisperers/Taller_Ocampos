@@ -1,0 +1,6 @@
+Work_Order_ID,Client_ID,Vehicle_ID,Date_Received,Date_Promised,Date_Completed,Mileage_In,Mileage_Out,Service_Writer,Technician,Customer_Complaint,Services_Performed,Labor_Hours,Parts_Used_IDs,Labor_Cost,Parts_Cost,Total_Cost,Status,Authorization_Amount,Payment_Status,Notes
+WO001,C001,V001,2024-03-01,2024-03-01,2024-03-01,87450,87452,Mike Johnson,Tom Wilson,Oil change due,Oil change + filter,1.0,P001;P002,50.00,35.00,85.00,Completed,100.00,Paid,Regular maintenance
+WO002,C002,V003,2024-03-02,2024-03-04,2024-03-04,44950,44955,Sarah Davis,Tom Wilson,Brake noise,Front brake pads replacement,2.5,P003;P004,125.00,89.50,214.50,Completed,250.00,Paid,Rotors were fine
+WO003,C001,V002,2024-03-03,2024-03-05,,61950,,Mike Johnson,Lisa Brown,Check engine light,Diagnostic + sensor replacement,3.0,P005,150.00,75.00,225.00,In Progress,300.00,Pending,Waiting for customer approval
+WO004,C003,V004,2024-03-04,2024-03-06,,124950,,Sarah Davis,Tom Wilson,Transmission slipping,Transmission service,4.0,P006;P007,200.00,156.00,356.00,Scheduled,400.00,Pending,Scheduled for tomorrow
+WO005,C001,V001,2024-03-05,2024-03-07,,87500,,Mike Johnson,,Annual inspection,State inspection,0.5,,25.00,0.00,25.00,Scheduled,25.00,Pending,Appointment confirmed

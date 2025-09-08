@@ -1,0 +1,5 @@
+Vehicle_ID,Client_ID,VIN,Make,Model,Year,License_Plate,Current_Mileage,Engine_Type,Transmission,Color,Date_Added,Last_Service_Date,Next_Service_Due,Insurance_Company,Policy_Number
+V001,C001,1HGBH41JXMN109186,Honda,Accord,2015,ABC123,87500,2.4L I4,Automatic,Silver,2024-01-15,2024-03-01,2024-09-01,State Farm,SF-123456789
+V002,C001,1G1BE5SM7H7123456,Chevrolet,Malibu,2017,XYZ789,62000,1.5L Turbo,Automatic,White,2024-01-15,2024-02-15,2024-08-15,Geico,GC-987654321
+V003,C002,3VW2K7AJ8KM123456,Volkswagen,Jetta,2019,DEF456,45000,1.4L Turbo,Manual,Blue,2024-02-01,2024-03-15,2024-09-15,Allstate,AS-456789123
+V004,C003,1FTFW1ET0EKF12345,Ford,F-150,2014,GHI789,125000,5.0L V8,Automatic,Red,2024-02-15,2024-02-28,2024-08-28,Progressive,PR-789123456
