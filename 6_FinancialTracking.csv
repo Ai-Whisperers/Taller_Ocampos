@@ -1,6 +1,0 @@
-Transaction_ID,Work_Order_ID,Client_ID,Invoice_Date,Invoice_Number,Description,Labor_Cost,Parts_Cost,Subtotal,Tax_Rate,Tax_Amount,Total_Amount,Payment_Method,Payment_Date,Amount_Paid,Balance_Due,Payment_Status,Due_Date,Days_Overdue,Discount_Applied,Refund_Amount
-FT001,WO001,C001,2024-03-01,INV-2024-001,Oil change service,50.00,35.00,85.00,8.25%,7.01,92.01,Cash,2024-03-01,92.01,0.00,Paid,2024-03-01,0,0.00,0.00
-FT002,WO002,C002,2024-03-04,INV-2024-002,Brake pads replacement,125.00,89.50,214.50,8.25%,17.70,232.20,Credit Card,2024-03-04,232.20,0.00,Paid,2024-03-04,0,0.00,0.00
-FT003,WO003,C001,2024-03-05,INV-2024-003,Engine diagnostic,150.00,75.00,225.00,8.25%,18.56,243.56,Check,,,243.56,Pending,2024-04-04,0,0.00,0.00
-FT004,,C003,2024-02-15,INV-2024-004,Previous balance,0.00,0.00,156.89,0.00%,0.00,156.89,,,156.89,Overdue,2024-03-17,-18,0.00,0.00
-FT005,,C001,2024-01-15,INV-2024-005,Warranty refund,0.00,0.00,-45.00,0.00%,0.00,-45.00,Cash,2024-01-15,-45.00,0.00,Refunded,2024-01-15,0,0.00,45.00

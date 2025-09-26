@@ -1,0 +1,53 @@
+PRD – MVP Aplicación para Taller Mecánico
+
+Objetivo del producto
+Crear una aplicación ligera y sencilla que permita administrar un taller mecánico de manera eficiente y organizada, reemplazando el uso de hojas de cálculo. Debe estar disponible en computadora (navegador o escritorio) y en teléfono (Android/iOS) para que el cliente y su padre puedan usarla fácilmente en cualquier dispositivo.
+
+Usuarios principales
+- Administrador 1 (Padre): Manejo completo del taller.
+- Administrador 2 (Hijo): Manejo completo del taller.
+
+Flujos principales
+1. Gestión de clientes
+   - Crear y editar clientes con datos básicos (nombre, teléfono, dirección).
+   - Consultar historial de vehículos y órdenes asociadas.
+
+2. Gestión de vehículos
+   - Registrar vehículo con marca, modelo, año, matrícula, kilometraje.
+   - Relacionar vehículo con su cliente.
+
+3. Órdenes de trabajo
+   - Crear nueva orden de trabajo.
+   - Estados: borrador, pendiente aprobación, en progreso, listo para entrega, cerrado.
+   - Agregar repuestos y mano de obra.
+   - Adjuntar notas.
+
+4. Inventario de repuestos
+   - Registrar repuestos con costo, precio de venta y stock.
+   - Alertas de stock bajo.
+   - Registrar proveedores.
+
+5. Facturación y pagos
+   - Generar presupuesto y convertirlo a factura.
+   - Registrar pagos parciales o totales.
+   - Estado de facturas: pagado, pendiente, vencido.
+   - Exportar facturas en PDF/Excel.
+
+6. Filtros y búsqueda
+   - Buscar clientes, vehículos u órdenes por nombre, matrícula, VIN o número de orden.
+   - Filtrar por estado, fechas o monto.
+
+7. Respaldo de datos
+   - Exportar base de datos en CSV/Excel.
+   - Importar datos desde Excel.
+   - Copias de seguridad periódicas.
+
+Requisitos técnicos
+- Multiplataforma: Web App (PC) + App móvil (Android/iOS).
+- Sincronización en la nube para datos unificados.
+- Modo offline básico con sincronización posterior.
+- Interfaz responsiva y simple para pantallas grandes y pequeñas.
+
+Éxito del MVP
+- Los dos administradores pueden manejar el taller desde el teléfono o la computadora sin usar Excel.
+- El sistema permite registrar clientes, vehículos y órdenes, gestionar inventario y facturación, y consultar historial básico de ingresos.

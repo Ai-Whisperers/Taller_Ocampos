@@ -1,9 +1,0 @@
-Schedule_ID,Work_Order_ID,Client_ID,Vehicle_ID,Appointment_Date,Appointment_Time,Estimated_Duration_Hours,Bay_Number,Technician_Assigned,Service_Writer,Priority_Level,Status,Customer_Notified,Arrival_Time,Start_Time,Estimated_Completion,Notes
-SCH001,WO001,C001,V001,2024-03-01,08:00,1.0,Bay 1,Tom Wilson,Mike Johnson,Routine,Completed,Yes,07:55,08:05,09:00,Customer arrived early
-SCH002,WO002,C002,V003,2024-03-02,10:00,2.5,Bay 2,Tom Wilson,Sarah Davis,Urgent,Completed,Yes,09:45,10:15,12:30,Slight delay in start
-SCH003,WO003,C001,V002,2024-03-03,14:00,3.0,Bay 1,Lisa Brown,Mike Johnson,Routine,In Progress,Yes,13:50,14:10,17:00,Diagnostic in progress
-SCH004,WO004,C003,V004,2024-03-06,09:00,4.0,Bay 3,Tom Wilson,Sarah Davis,High,Scheduled,Yes,,,13:00,Transmission specialist needed
-SCH005,WO005,C001,V001,2024-03-07,11:00,0.5,Bay 4,,Mike Johnson,Routine,Scheduled,Yes,,,11:30,Quick inspection only
-SCH006,,C002,V003,2024-03-08,08:30,2.0,Bay 2,Lisa Brown,Sarah Davis,Routine,Scheduled,No,,,10:30,Follow-up brake check
-SCH007,,C003,V004,2024-03-08,13:00,1.0,Bay 1,Tom Wilson,Mike Johnson,Routine,Scheduled,No,,,14:00,Oil change appointment
-SCH008,,C001,V002,2024-03-09,15:00,1.5,Bay 3,Lisa Brown,Sarah Davis,Urgent,Scheduled,No,,,16:30,Engine noise complaint

@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  IN_PROGRESS
+  READY_FOR_PICKUP
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  CHECK
+  OTHER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(ADMIN)
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrders WorkOrder[]
+  invoices   Invoice[]
+  payments   Payment[]
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String
+  address   String?
+  taxId     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles   Vehicle[]
+  workOrders WorkOrder[]
+  invoices   Invoice[]
+  payments   Payment[]
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  clientId     String
+  licensePlate String   @unique
+  vin          String?  @unique
+  brand        String
+  model        String
+  year         Int
+  color        String?
+  mileage      Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  client     Client      @relation(fields: [clientId], references: [id])
+  workOrders WorkOrder[]
+}
+
+model WorkOrder {
+  id               String          @id @default(uuid())
+  orderNumber      String          @unique
+  clientId         String
+  vehicleId        String
+  userId           String
+  status           WorkOrderStatus @default(DRAFT)
+  description      String
+  diagnostics      String?
+  estimatedHours   Float?
+  actualHours      Float?
+  laborRate        Decimal         @db.Decimal(10, 2)
+  estimatedCost    Decimal?        @db.Decimal(10, 2)
+  actualCost       Decimal?        @db.Decimal(10, 2)
+  startDate        DateTime?
+  completionDate   DateTime?
+  notes            String?
+  internalNotes    String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  client       Client              @relation(fields: [clientId], references: [id])
+  vehicle      Vehicle             @relation(fields: [vehicleId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
+  services     WorkOrderService[]
+  parts        WorkOrderPart[]
+  invoices     Invoice[]
+  attachments  Attachment[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  category    String?
+  basePrice   Decimal  @db.Decimal(10, 2)
+  estimatedHours Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrderServices WorkOrderService[]
+}
+
+model WorkOrderService {
+  id          String   @id @default(uuid())
+  workOrderId String
+  serviceId   String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  discount    Decimal? @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+  service   Service   @relation(fields: [serviceId], references: [id])
+}
+
+model Part {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  description  String?
+  category     String?
+  brand        String?
+  costPrice    Decimal  @db.Decimal(10, 2)
+  salePrice    Decimal  @db.Decimal(10, 2)
+  currentStock Int      @default(0)
+  minStock     Int      @default(0)
+  maxStock     Int?
+  location     String?
+  supplierId   String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  workOrderParts WorkOrderPart[]
+  stockMovements StockMovement[]
+}
+
+model WorkOrderPart {
+  id          String   @id @default(uuid())
+  workOrderId String
+  partId      String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  discount    Decimal? @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+  part      Part      @relation(fields: [partId], references: [id])
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  taxId     String?
+  email     String?
+  phone     String?
+  address   String?
+  website   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parts Part[]
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  workOrderId   String?
+  clientId      String
+  userId        String
+  status        InvoiceStatus @default(DRAFT)
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime
+  subtotal      Decimal       @db.Decimal(10, 2)
+  taxRate       Decimal       @db.Decimal(5, 2)
+  taxAmount     Decimal       @db.Decimal(10, 2)
+  discount      Decimal?      @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  paidAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  notes         String?
+  terms         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  workOrder  WorkOrder? @relation(fields: [workOrderId], references: [id])
+  client     Client     @relation(fields: [clientId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  payments   Payment[]
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  paymentNumber String        @unique
+  invoiceId     String
+  clientId      String
+  userId        String
+  amount        Decimal       @db.Decimal(10, 2)
+  method        PaymentMethod
+  reference     String?
+  notes         String?
+  paymentDate   DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  client  Client  @relation(fields: [clientId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model StockMovement {
+  id           String   @id @default(uuid())
+  partId       String
+  type         String   // IN, OUT, ADJUSTMENT
+  quantity     Int
+  previousStock Int
+  currentStock Int
+  reference    String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  part Part @relation(fields: [partId], references: [id])
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  workOrderId String
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+}

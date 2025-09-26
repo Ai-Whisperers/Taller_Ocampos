@@ -1,148 +1,189 @@
-import { User, Shop, Client, Vehicle, WorkOrder, PartsInventory } from '@prisma/client';
-import bcrypt from 'bcrypt';
-
-export const createTestUser = async (overrides: Partial<User> = {}): Promise<Partial<User>> => {
-  const hashedPassword = await bcrypt.hash('TestPassword123', 10);
-  
-  return {
-    email: 'test@example.com',
-    passwordHash: hashedPassword,
-    firstName: 'John',
-    lastName: 'Doe',
-    phone: '555-0123',
-    role: 'owner',
-    isActive: true,
-    emailVerified: true,
-    ...overrides
-  };
-};
-
-export const createTestShop = (userId: string, overrides: Partial<Shop> = {}): Partial<Shop> => ({
-  name: 'Test Auto Repair',
-  ownerId: userId,
-  address: '123 Main Street',
-  city: 'Testville',
-  state: 'TS',
-  zipCode: '12345',
-  phone: '555-0123',
-  email: 'info@testshop.com',
-  taxRate: 0.0825,
-  laborRate: 50.00,
-  bayCount: 4,
-  subscriptionTier: 'professional',
-  isActive: true,
-  ...overrides
-});
-
-export const createTestClient = (shopId: string, overrides: Partial<Client> = {}): Partial<Client> => ({
-  shopId,
-  clientId: 'C001',
-  firstName: 'Jane',
-  lastName: 'Smith',
-  phone: '555-0456',
-  email: 'jane.smith@email.com',
-  address: '456 Oak Street',
-  city: 'Testville',
-  state: 'TS',
-  zipCode: '12345',
-  paymentTerms: 'COD',
-  creditLimit: 1000.00,
-  preferredContact: 'phone',
-  isActive: true,
-  ...overrides
-});
-
-export const createTestVehicle = (shopId: string, clientId: string, overrides: Partial<Vehicle> = {}): Partial<Vehicle> => ({
-  shopId,
-  clientId,
-  vehicleId: 'V001',
-  vin: '1HGBH41JXMN109186',
-  make: 'Honda',
-  model: 'Civic',
-  year: 2020,
-  licensePlate: 'ABC123',
-  currentMileage: 50000,
-  engineType: '2.0L 4-Cylinder',
-  transmission: 'CVT',
-  color: 'Blue',
-  isActive: true,
-  ...overrides
-});
-
-export const createTestWorkOrder = (shopId: string, clientId: string, vehicleId: string, overrides: Partial<WorkOrder> = {}): Partial<WorkOrder> => ({
-  shopId,
-  workOrderId: 'WO001',
-  clientId,
-  vehicleId,
-  dateReceived: new Date(),
-  datePromised: new Date(Date.now() + 24 * 60 * 60 * 1000), // tomorrow
-  mileageIn: 50000,
-  customerComplaint: 'Oil change needed',
-  laborHours: 1.0,
-  laborCost: 50.00,
-  partsCost: 25.00,
-  taxAmount: 6.19,
-  status: 'scheduled',
-  authorizationAmount: 100.00,
-  paymentStatus: 'pending',
-  priorityLevel: 'routine',
-  ...overrides
-});
-
-export const createTestPart = (shopId: string, overrides: Partial<PartsInventory> = {}): Partial<PartsInventory> => ({
-  shopId,
-  partId: 'P001',
-  partNumber: '15400-PLM-A02',
-  description: 'Honda Oil Filter',
-  category: 'Filters',
-  supplier: 'Honda Parts',
-  supplierPartNumber: '15400-PLM-A02',
-  costPrice: 8.50,
-  sellingPrice: 15.99,
-  quantityOnHand: 25,
-  minStockLevel: 5,
-  maxStockLevel: 50,
-  reorderPoint: 10,
-  reorderQuantity: 25,
-  location: 'Shelf A1',
-  isActive: true,
-  ...overrides
-});
+import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
 
 export const testUsers = {
-  owner: {
-    email: 'owner@testshop.com',
-    role: 'owner' as const
-  },
-  manager: {
-    email: 'manager@testshop.com',
-    role: 'manager' as const
-  },
-  technician: {
-    email: 'technician@testshop.com',
-    role: 'technician' as const
+  admin: {
+    id: faker.string.uuid(),
+    email: 'admin@test.com',
+    password: 'Admin123!',
+    hashedPassword: bcrypt.hashSync('Admin123!', 10),
+    name: 'Admin User',
+    role: 'ADMIN' as const,
+    phone: faker.phone.number(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   staff: {
-    email: 'staff@testshop.com',
-    role: 'staff' as const
-  }
+    id: faker.string.uuid(),
+    email: 'staff@test.com',
+    password: 'Staff123!',
+    hashedPassword: bcrypt.hashSync('Staff123!', 10),
+    name: 'Staff User',
+    role: 'STAFF' as const,
+    phone: faker.phone.number(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 };
 
-export const apiResponses = {
-  success: (data: any, message = 'Success') => ({
-    success: true,
-    message,
-    data
-  }),
-  error: (message: string, statusCode = 400) => ({
-    success: false,
-    message,
-    statusCode
-  }),
-  validation: (errors: Record<string, string>) => ({
-    success: false,
-    message: 'Validation failed',
-    errors,
-    statusCode: 400
-  })
+export const testClients = {
+  client1: {
+    id: faker.string.uuid(),
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    phone: faker.phone.number(),
+    document: faker.string.alphanumeric(10),
+    address: faker.location.streetAddress(),
+    city: faker.location.city(),
+    state: faker.location.state(),
+    zipCode: faker.location.zipCode(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  client2: {
+    id: faker.string.uuid(),
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    phone: faker.phone.number(),
+    document: faker.string.alphanumeric(10),
+    address: faker.location.streetAddress(),
+    city: faker.location.city(),
+    state: faker.location.state(),
+    zipCode: faker.location.zipCode(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 };
+
+export const testVehicles = {
+  vehicle1: {
+    id: faker.string.uuid(),
+    clientId: testClients.client1.id,
+    make: 'Toyota',
+    model: 'Camry',
+    year: 2022,
+    licensePlate: faker.vehicle.vrm(),
+    vin: faker.vehicle.vin(),
+    color: faker.vehicle.color(),
+    mileage: faker.number.int({ min: 1000, max: 100000 }),
+    fuelType: 'GASOLINE',
+    transmissionType: 'AUTOMATIC',
+    engineSize: '2.5L',
+    notes: faker.lorem.sentence(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  vehicle2: {
+    id: faker.string.uuid(),
+    clientId: testClients.client2.id,
+    make: 'Honda',
+    model: 'Civic',
+    year: 2023,
+    licensePlate: faker.vehicle.vrm(),
+    vin: faker.vehicle.vin(),
+    color: faker.vehicle.color(),
+    mileage: faker.number.int({ min: 1000, max: 50000 }),
+    fuelType: 'GASOLINE',
+    transmissionType: 'MANUAL',
+    engineSize: '1.8L',
+    notes: faker.lorem.sentence(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+};
+
+export const testWorkOrders = {
+  workOrder1: {
+    id: faker.string.uuid(),
+    vehicleId: testVehicles.vehicle1.id,
+    clientId: testClients.client1.id,
+    status: 'IN_PROGRESS' as const,
+    title: 'Oil Change and Tire Rotation',
+    description: faker.lorem.paragraph(),
+    estimatedCost: faker.number.float({ min: 100, max: 500, fractionDigits: 2 }),
+    actualCost: null,
+    estimatedCompletionDate: faker.date.future(),
+    completedAt: null,
+    assignedToId: testUsers.staff.id,
+    notes: faker.lorem.sentence(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  workOrder2: {
+    id: faker.string.uuid(),
+    vehicleId: testVehicles.vehicle2.id,
+    clientId: testClients.client2.id,
+    status: 'PENDING_APPROVAL' as const,
+    title: 'Brake Inspection',
+    description: faker.lorem.paragraph(),
+    estimatedCost: faker.number.float({ min: 200, max: 800, fractionDigits: 2 }),
+    actualCost: null,
+    estimatedCompletionDate: faker.date.future(),
+    completedAt: null,
+    assignedToId: testUsers.staff.id,
+    notes: faker.lorem.sentence(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+};
+
+export const testParts = {
+  part1: {
+    id: faker.string.uuid(),
+    code: faker.string.alphanumeric(8).toUpperCase(),
+    name: 'Engine Oil Filter',
+    description: 'Premium quality oil filter',
+    category: 'Filters',
+    brand: 'BOSCH',
+    unitPrice: faker.number.float({ min: 10, max: 50, fractionDigits: 2 }),
+    sellingPrice: faker.number.float({ min: 15, max: 75, fractionDigits: 2 }),
+    quantity: faker.number.int({ min: 10, max: 100 }),
+    minimumStock: 5,
+    location: 'A1-B2',
+    supplierId: faker.string.uuid(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  part2: {
+    id: faker.string.uuid(),
+    code: faker.string.alphanumeric(8).toUpperCase(),
+    name: 'Brake Pad Set',
+    description: 'Front brake pads',
+    category: 'Brakes',
+    brand: 'BREMBO',
+    unitPrice: faker.number.float({ min: 30, max: 100, fractionDigits: 2 }),
+    sellingPrice: faker.number.float({ min: 50, max: 150, fractionDigits: 2 }),
+    quantity: faker.number.int({ min: 5, max: 50 }),
+    minimumStock: 3,
+    location: 'C3-D4',
+    supplierId: faker.string.uuid(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+};
+
+export const generateAuthToken = (userId: string, role: string = 'ADMIN'): string => {
+  // This is a mock token for testing
+  return `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
+    JSON.stringify({ id: userId, role, email: 'test@test.com' })
+  ).toString('base64')}.test_signature`;
+};
+
+export const mockRequest = {
+  headers: {},
+  body: {},
+  params: {},
+  query: {},
+  user: null,
+};
+
+export const mockResponse = () => {
+  const res: any = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  res.send = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn().mockReturnValue(res);
+  return res;
+};
+
+export const mockNext = jest.fn();

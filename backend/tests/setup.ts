@@ -1,75 +1,98 @@
 import { PrismaClient } from '@prisma/client';
-import { execSync } from 'child_process';
-import { randomBytes } from 'crypto';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Mock environment variables for testing
-process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-for-testing';
-process.env.ENCRYPTION_KEY = 'test-encryption-key-32-chars-long';
+// Load test environment variables
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
 
-// Generate unique test database name
-const testDatabaseName = `mechanics_test_${randomBytes(8).toString('hex')}`;
-process.env.DATABASE_URL = `postgresql://test_user:test_password@localhost:5433/${testDatabaseName}`;
+// Mock PrismaClient for testing
+jest.mock('@prisma/client', () => {
+  const mockPrismaClient = {
+    user: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    client: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    vehicle: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    workOrder: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    part: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    invoice: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    payment: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    $transaction: jest.fn(),
+    $disconnect: jest.fn(),
+    $connect: jest.fn(),
+  };
 
-let prisma: PrismaClient;
-
-beforeAll(async () => {
-  // Create test database
-  execSync(`createdb -h localhost -p 5433 -U test_user ${testDatabaseName}`, {
-    env: { ...process.env, PGPASSWORD: 'test_password' }
-  });
-
-  // Initialize Prisma client
-  prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL
-      }
-    }
-  });
-
-  // Run migrations
-  execSync('npx prisma migrate deploy', {
-    env: process.env,
-    cwd: process.cwd()
-  });
-
-  // Connect to database
-  await prisma.$connect();
-}, 30000);
-
-afterAll(async () => {
-  // Clean up
-  await prisma.$disconnect();
-  
-  // Drop test database
-  execSync(`dropdb -h localhost -p 5433 -U test_user ${testDatabaseName}`, {
-    env: { ...process.env, PGPASSWORD: 'test_password' }
-  });
-}, 10000);
-
-beforeEach(async () => {
-  // Clean database before each test
-  const deleteOperations = [
-    prisma.auditLog.deleteMany(),
-    prisma.notification.deleteMany(),
-    prisma.systemSetting.deleteMany(),
-    prisma.workOrderPart.deleteMany(),
-    prisma.financialTransaction.deleteMany(),
-    prisma.schedule.deleteMany(),
-    prisma.workOrder.deleteMany(),
-    prisma.vehicle.deleteMany(),
-    prisma.client.deleteMany(),
-    prisma.partsInventory.deleteMany(),
-    prisma.servicesCatalog.deleteMany(),
-    prisma.userShop.deleteMany(),
-    prisma.shop.deleteMany(),
-    prisma.user.deleteMany()
-  ];
-
-  await prisma.$transaction(deleteOperations);
+  return {
+    PrismaClient: jest.fn(() => mockPrismaClient),
+  };
 });
 
-// Export prisma instance for tests
-export { prisma };
+// Global test timeout
+jest.setTimeout(10000);
+
+// Mock console methods to reduce test output noise
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+  log: jest.fn(),
+};
+
+// Clean up after all tests
+afterAll(async () => {
+  jest.clearAllMocks();
+  jest.resetAllMocks();
+});
+
+// Reset mocks after each test
+afterEach(() => {
+  jest.clearAllMocks();
+});
