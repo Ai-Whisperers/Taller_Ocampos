@@ -19,6 +19,7 @@ import workOrderRoutes from './routes/workOrder.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import paymentRoutes from './routes/payment.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 // Load environment variables
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/work-orders', workOrderRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

@@ -8,7 +8,7 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3004'],
+  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3004', 'http://localhost:3006', 'http://localhost:3007'],
   credentials: true
 }));
 app.use(express.json());
