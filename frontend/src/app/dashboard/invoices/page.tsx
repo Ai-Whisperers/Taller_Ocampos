@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, FileText, Download, Eye, DollarSign } from 'lucide-react';
+import { Search, FileText, Download, Eye, DollarSign, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
 
@@ -37,52 +44,60 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    clientId: '',
+    workOrderId: '',
+    subtotal: 0,
+    tax: 0,
+    total: 0,
+    status: 'draft'
+  });
 
   useEffect(() => {
     fetchInvoices();
+    fetchClientsAndOrders();
   }, []);
+
+  const fetchClientsAndOrders = async () => {
+    try {
+      const [clientsRes, ordersRes] = await Promise.all([
+        fetch('http://localhost:3001/api/clients?limit=1000'),
+        fetch('http://localhost:3001/api/work-orders?limit=1000')
+      ]);
+      const clientsData = await clientsRes.json();
+      const ordersData = await ordersRes.json();
+
+      if (clientsData.success) setClients(clientsData.data);
+      if (ordersData.success) setWorkOrders(ordersData.data);
+    } catch (error) {
+      console.error('Error fetching clients/orders:', error);
+    }
+  };
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      const response = await fetch('http://localhost:3001/api/invoices');
+      const data = await response.json();
 
-      // Mock data for now
-      const mockInvoices: Invoice[] = [
-        {
-          id: '1',
-          invoiceNumber: 'FAC-2024-001',
-          clientName: 'Juan Pérez',
-          workOrderNumber: 'OT-2024-001',
-          amount: 150000,
-          status: 'paid',
-          issueDate: '2024-01-15',
-          dueDate: '2024-01-30',
-          paymentDate: '2024-01-20',
-        },
-        {
-          id: '2',
-          invoiceNumber: 'FAC-2024-002',
-          clientName: 'María González',
-          workOrderNumber: 'OT-2024-002',
-          amount: 280000,
-          status: 'pending',
-          issueDate: '2024-01-20',
-          dueDate: '2024-02-04',
-        },
-        {
-          id: '3',
-          invoiceNumber: 'FAC-2024-003',
-          clientName: 'Carlos López',
-          workOrderNumber: 'OT-2024-003',
-          amount: 450000,
-          status: 'overdue',
-          issueDate: '2024-01-10',
-          dueDate: '2024-01-25',
-        },
-      ];
-
-      setInvoices(mockInvoices);
+      if (data.success) {
+        setInvoices(data.data.map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          clientName: inv.clientName,
+          workOrderNumber: inv.orderNumber,
+          amount: inv.total,
+          status: inv.status === 'paid' ? 'paid' : inv.status === 'draft' ? 'draft' : inv.status === 'overdue' ? 'overdue' : 'pending',
+          issueDate: new Date(inv.issueDate).toISOString().split('T')[0],
+          dueDate: new Date(new Date(inv.issueDate).getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          paymentDate: inv.status === 'paid' ? new Date(inv.updatedAt).toISOString().split('T')[0] : undefined
+        })));
+      } else {
+        toast.error('Error al cargar facturas');
+      }
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast.error('Error al cargar facturas');
@@ -98,6 +113,52 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Error exporting invoice:', error);
       toast.error('Error al exportar factura');
+    }
+  };
+
+  const handleCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.clientId || formData.total === 0) {
+      toast.error('Por favor complete los campos requeridos');
+      return;
+    }
+
+    // Verify price matches work order if one is selected
+    if (formData.workOrderId) {
+      const selectedOrder = workOrders.find(order => order.id === formData.workOrderId);
+      if (selectedOrder && selectedOrder.totalAmount !== formData.subtotal) {
+        toast.error(`El monto debe coincidir con la orden de trabajo (₲ ${selectedOrder.totalAmount.toLocaleString('es-PY')})`);
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Factura creada exitosamente');
+        setShowCreateForm(false);
+        setFormData({
+          clientId: '',
+          workOrderId: '',
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+          status: 'draft'
+        });
+        fetchInvoices();
+      } else {
+        toast.error(result.message || 'Error al crear factura');
+      }
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      toast.error('Error al crear factura');
     }
   };
 
@@ -162,8 +223,147 @@ export default function InvoicesPage() {
                 />
               </div>
             </div>
+            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Factura
+            </Button>
           </div>
         </div>
+
+        {showCreateForm && (
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">Nueva Factura</h3>
+            <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Cliente *</label>
+                <Select
+                  value={formData.clientId}
+                  onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Orden de Trabajo (opcional)</label>
+                <Select
+                  value={formData.workOrderId}
+                  onValueChange={(value) => {
+                    const selectedOrder = workOrders.find(order => order.id === value);
+                    if (selectedOrder) {
+                      const subtotal = selectedOrder.totalAmount || 0;
+                      const tax = subtotal * 0.1;
+                      setFormData({
+                        ...formData,
+                        workOrderId: value,
+                        clientId: selectedOrder.clientId || formData.clientId,
+                        subtotal,
+                        tax,
+                        total: subtotal + tax
+                      });
+                    } else {
+                      setFormData({ ...formData, workOrderId: value });
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar orden" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workOrders.map((order) => (
+                      <SelectItem key={order.id} value={order.id}>
+                        {order.orderNumber} - {order.description?.substring(0, 30)} (₲ {order.totalAmount?.toLocaleString('es-PY') || '0'})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Subtotal (₲) *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.subtotal === 0 ? '' : formData.subtotal}
+                  onChange={(e) => {
+                    const subtotal = e.target.value === '' ? 0 : Number(e.target.value);
+                    const tax = subtotal * 0.1; // 10% tax
+                    setFormData({
+                      ...formData,
+                      subtotal,
+                      tax,
+                      total: subtotal + tax
+                    });
+                  }}
+                  readOnly={!!formData.workOrderId}
+                  className={formData.workOrderId ? 'bg-gray-100' : ''}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">IVA (₲)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.tax}
+                  readOnly
+                  className="bg-gray-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Total (₲) *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.total}
+                  readOnly
+                  className="bg-gray-100 font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Estado</label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Borrador</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="paid">Pagado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2 flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Crear Factura
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -203,8 +403,8 @@ export default function InvoicesPage() {
                       ₲ {invoice.amount.toLocaleString('es-PY')}
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusConfig[invoice.status].color}>
-                        {statusConfig[invoice.status].label}
+                      <Badge className={statusConfig[invoice.status]?.color || 'bg-gray-100 text-gray-700'}>
+                        {statusConfig[invoice.status]?.label || invoice.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -220,7 +420,7 @@ export default function InvoicesPage() {
                           size="icon"
                           onClick={() => {
                             // TODO: View invoice details
-                            toast.info('Vista de detalles en desarrollo');
+                            toast('Vista de detalles en desarrollo');
                           }}
                         >
                           <Eye className="h-4 w-4" />

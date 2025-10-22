@@ -84,3 +84,7 @@ httpServer.listen(PORT, () => {
   logger.info(`Socket.IO running on port ${SOCKET_PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
 });
+
+// Export app for testing
+export default app;
+export { httpServer, io };

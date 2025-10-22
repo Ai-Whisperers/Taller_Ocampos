@@ -34,10 +34,12 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@prisma/(.*)$': '<rootDir>/prisma/$1'
+    '^@/(.*)$': '<rootDir>/src/$1'
   },
   clearMocks: true,
   testTimeout: 10000,
-  verbose: true
+  verbose: true,
+  transformIgnorePatterns: [
+    'node_modules/(?!(@faker-js)/)'
+  ]
 };

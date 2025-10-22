@@ -91,38 +91,14 @@ export default function VehiclesPage() {
   const fetchVehicles = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      const response = await fetch('http://localhost:3001/api/vehicles');
+      const data = await response.json();
 
-      // Mock data for now
-      const mockVehicles: Vehicle[] = [
-        {
-          id: '1',
-          brand: 'Toyota',
-          model: 'Corolla',
-          year: '2020',
-          licensePlate: 'ABC123',
-          vin: '1HGBH41JXMN109186',
-          mileage: 45000,
-          clientId: '1',
-          clientName: 'Juan Pérez',
-          lastService: '2024-01-15',
-          serviceCount: 3,
-        },
-        {
-          id: '2',
-          brand: 'Ford',
-          model: 'Ranger',
-          year: '2019',
-          licensePlate: 'XYZ789',
-          mileage: 68000,
-          clientId: '2',
-          clientName: 'María González',
-          lastService: '2024-01-20',
-          serviceCount: 5,
-        },
-      ];
-
-      setVehicles(mockVehicles);
+      if (data.success) {
+        setVehicles(data.data);
+      } else {
+        toast.error('Error al cargar vehículos');
+      }
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       toast.error('Error al cargar vehículos');
@@ -133,16 +109,12 @@ export default function VehiclesPage() {
 
   const fetchClients = async () => {
     try {
-      // TODO: Replace with actual API call
+      const response = await fetch('http://localhost:3001/api/clients');
+      const data = await response.json();
 
-      // Mock data for now
-      const mockClients: Client[] = [
-        { id: '1', name: 'Juan Pérez' },
-        { id: '2', name: 'María González' },
-        { id: '3', name: 'Carlos López' },
-      ];
-
-      setClients(mockClients);
+      if (data.success) {
+        setClients(data.data);
+      }
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -151,11 +123,33 @@ export default function VehiclesPage() {
   const onSubmit = async (data: VehicleFormData) => {
     try {
       if (editingVehicle) {
-        // TODO: Update vehicle API call
-        toast.success('Vehículo actualizado exitosamente');
+        const response = await fetch(`http://localhost:3001/api/vehicles/${editingVehicle.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Vehículo actualizado exitosamente');
+        } else {
+          toast.error(result.message || 'Error al actualizar vehículo');
+          return;
+        }
       } else {
-        // TODO: Create vehicle API call
-        toast.success('Vehículo creado exitosamente');
+        const response = await fetch('http://localhost:3001/api/vehicles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Vehículo creado exitosamente');
+        } else {
+          toast.error(result.message || 'Error al crear vehículo');
+          return;
+        }
       }
 
       reset();
@@ -185,9 +179,17 @@ export default function VehiclesPage() {
   const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de eliminar este vehículo?')) {
       try {
-        // TODO: Delete vehicle API call
-        toast.success('Vehículo eliminado exitosamente');
-        fetchVehicles();
+        const response = await fetch(`http://localhost:3001/api/vehicles/${id}`, {
+          method: 'DELETE',
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Vehículo eliminado exitosamente');
+          fetchVehicles();
+        } else {
+          toast.error(result.message || 'Error al eliminar vehículo');
+        }
       } catch (error) {
         console.error('Error deleting vehicle:', error);
         toast.error('Error al eliminar vehículo');
@@ -426,7 +428,7 @@ export default function VehiclesPage() {
                           size="icon"
                           onClick={() => {
                             // TODO: Navigate to vehicle history
-                            toast.info('Historial en desarrollo');
+                            toast('Historial en desarrollo');
                           }}
                         >
                           <Eye className="h-4 w-4" />

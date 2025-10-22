@@ -36,18 +36,10 @@ export default function DashboardPage() {
 
   const fetchDashboardStats = async () => {
     try {
-      // In a real app, this would be a single API call
-      // For now, we'll use mock data
-      setStats({
-        totalClients: 156,
-        totalVehicles: 234,
-        activeWorkOrders: 12,
-        monthlyRevenue: 45678.90,
-        lowStockItems: 5,
-        pendingInvoices: 8,
-        todayWorkOrders: 3,
-        weeklyGrowth: 12.5,
-      });
+      const response = await api.get('/dashboard/stats');
+      if (response.data.success) {
+        setStats(response.data.data.stats);
+      }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
     } finally {
@@ -102,15 +94,15 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Bienvenido de vuelta, aquí está el resumen de tu taller</p>
+      <div className="pt-12 lg:pt-0">
+        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+        <p className="text-sm md:text-base text-gray-600 mt-1">Bienvenido de vuelta, aquí está el resumen de tu taller</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -139,63 +131,63 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Acciones Rápidas</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Acciones Rápidas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <Users className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm">Nuevo Cliente</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <button className="p-3 md:p-4 border rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
+              <Users className="h-5 w-5 md:h-6 md:w-6 mb-2 text-primary" />
+              <span className="text-xs md:text-sm text-center">Nuevo Cliente</span>
             </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <Car className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm">Registrar Vehículo</span>
+            <button className="p-3 md:p-4 border rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
+              <Car className="h-5 w-5 md:h-6 md:w-6 mb-2 text-primary" />
+              <span className="text-xs md:text-sm text-center">Registrar Vehículo</span>
             </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <Wrench className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm">Nueva Orden</span>
+            <button className="p-3 md:p-4 border rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
+              <Wrench className="h-5 w-5 md:h-6 md:w-6 mb-2 text-primary" />
+              <span className="text-xs md:text-sm text-center">Nueva Orden</span>
             </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <FileText className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm">Crear Factura</span>
+            <button className="p-3 md:p-4 border rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
+              <FileText className="h-5 w-5 md:h-6 md:w-6 mb-2 text-primary" />
+              <span className="text-xs md:text-sm text-center">Crear Factura</span>
             </button>
           </div>
         </CardContent>
       </Card>
 
       {/* Recent Activity & Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Recent Work Orders */}
         <Card>
           <CardHeader>
-            <CardTitle>Órdenes de Trabajo Recientes</CardTitle>
+            <CardTitle className="text-lg md:text-xl">Órdenes de Trabajo Recientes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Honda Civic - ABC123</p>
-                  <p className="text-sm text-gray-600">Juan Pérez • Cambio de aceite</p>
+            <div className="space-y-3 md:space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm md:text-base truncate">Honda Civic - ABC123</p>
+                  <p className="text-xs md:text-sm text-gray-600 truncate">Juan Pérez • Cambio de aceite</p>
                 </div>
-                <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded whitespace-nowrap self-start sm:self-center">
                   En Progreso
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Toyota Corolla - XYZ789</p>
-                  <p className="text-sm text-gray-600">María García • Revisión general</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm md:text-base truncate">Toyota Corolla - XYZ789</p>
+                  <p className="text-xs md:text-sm text-gray-600 truncate">María García • Revisión general</p>
                 </div>
-                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded whitespace-nowrap self-start sm:self-center">
                   Completado
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Ford Focus - DEF456</p>
-                  <p className="text-sm text-gray-600">Carlos López • Reparación de frenos</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm md:text-base truncate">Ford Focus - DEF456</p>
+                  <p className="text-xs md:text-sm text-gray-600 truncate">Carlos López • Reparación de frenos</p>
                 </div>
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded whitespace-nowrap self-start sm:self-center">
                   Pendiente
                 </span>
               </div>
@@ -206,10 +198,10 @@ export default function DashboardPage() {
         {/* Alerts & Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle>Alertas y Notificaciones</CardTitle>
+            <CardTitle className="text-lg md:text-xl">Alertas y Notificaciones</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {stats.lowStockItems > 0 && (
                 <div className="flex items-start space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <Package className="h-5 w-5 text-red-600 mt-0.5" />

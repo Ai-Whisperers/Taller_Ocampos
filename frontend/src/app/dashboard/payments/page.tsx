@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, CreditCard, Check, Clock } from 'lucide-react';
+import { Search, CreditCard, Check, Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
 
@@ -44,58 +51,97 @@ export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    invoiceId: '',
+    amount: 0,
+    paymentMethod: 'cash',
+    reference: ''
+  });
 
   useEffect(() => {
     fetchPayments();
+    fetchInvoices();
   }, []);
+
+  const fetchInvoices = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/invoices?limit=1000');
+      const data = await response.json();
+
+      if (data.success) {
+        // Filter pending invoices
+        const pendingInvoices = data.data.filter((inv: any) => inv.status === 'pending' || inv.status === 'draft');
+        setInvoices(pendingInvoices);
+      }
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+    }
+  };
 
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      const response = await fetch('http://localhost:3001/api/payments');
+      const data = await response.json();
 
-      // Mock data for now
-      const mockPayments: Payment[] = [
-        {
-          id: '1',
-          paymentNumber: 'PAG-2024-001',
-          invoiceNumber: 'FAC-2024-001',
-          clientName: 'Juan Pérez',
-          amount: 150000,
-          method: 'cash',
-          status: 'completed',
-          date: '2024-01-20',
-        },
-        {
-          id: '2',
-          paymentNumber: 'PAG-2024-002',
-          invoiceNumber: 'FAC-2024-002',
-          clientName: 'María González',
-          amount: 140000,
-          method: 'transfer',
-          status: 'pending',
-          date: '2024-01-22',
-          reference: 'TRF-123456',
-        },
-        {
-          id: '3',
-          paymentNumber: 'PAG-2024-003',
-          invoiceNumber: 'FAC-2024-002',
-          clientName: 'María González',
-          amount: 140000,
-          method: 'card',
-          status: 'completed',
-          date: '2024-01-23',
-          reference: 'VISA-7890',
-        },
-      ];
-
-      setPayments(mockPayments);
+      if (data.success) {
+        setPayments(data.data.map((p: any, index: number) => ({
+          id: p.id,
+          paymentNumber: `PAG-${new Date().getFullYear()}-${String(index + 1).padStart(3, '0')}`,
+          invoiceNumber: p.invoiceNumber,
+          clientName: p.clientName,
+          amount: p.amount,
+          method: p.paymentMethod as 'cash' | 'card' | 'transfer',
+          status: 'completed' as const,
+          date: new Date(p.paymentDate).toISOString().split('T')[0],
+          reference: p.reference || undefined
+        })));
+      } else {
+        toast.error('Error al cargar pagos');
+      }
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast.error('Error al cargar pagos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.invoiceId || !formData.amount || !formData.paymentMethod) {
+      toast.error('Por favor complete los campos requeridos');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Pago registrado exitosamente');
+        setShowCreateForm(false);
+        setFormData({
+          invoiceId: '',
+          amount: 0,
+          paymentMethod: 'cash',
+          reference: ''
+        });
+        fetchPayments();
+        fetchInvoices(); // Refresh to update pending invoices
+      } else {
+        toast.error(result.message || 'Error al registrar pago');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast.error('Error al registrar pago');
     }
   };
 
@@ -169,15 +215,97 @@ export default function PaymentsPage() {
                 />
               </div>
             </div>
-            <Button onClick={() => {
-              // TODO: Navigate to register payment
-              toast.info('Registro de pago en desarrollo');
-            }}>
-              <CreditCard className="h-4 w-4 mr-2" />
+            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+              <Plus className="h-4 w-4 mr-2" />
               Registrar Pago
             </Button>
           </div>
         </div>
+
+        {showCreateForm && (
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">Registrar Pago</h3>
+            <form onSubmit={handleCreatePayment} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Factura *</label>
+                <Select
+                  value={formData.invoiceId}
+                  onValueChange={(value) => {
+                    const selectedInvoice = invoices.find(inv => inv.id === value);
+                    setFormData({
+                      ...formData,
+                      invoiceId: value,
+                      amount: selectedInvoice?.total || 0
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar factura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invoices.map((invoice) => (
+                      <SelectItem key={invoice.id} value={invoice.id}>
+                        {invoice.invoiceNumber} - {invoice.clientName} (₲ {invoice.total?.toLocaleString('es-PY')})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Monto (₲) *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Método de Pago *</label>
+                <Select
+                  value={formData.paymentMethod}
+                  onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Efectivo 💵</SelectItem>
+                    <SelectItem value="transfer">Transferencia 🏦</SelectItem>
+                    <SelectItem value="card">Tarjeta 💳</SelectItem>
+                    <SelectItem value="check">Cheque 📄</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Referencia (opcional)</label>
+                <Input
+                  type="text"
+                  placeholder="Número de transacción, cheque, etc."
+                  value={formData.reference}
+                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                />
+              </div>
+
+              <div className="md:col-span-2 flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Registrar Pago
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -218,13 +346,13 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">
-                        <span>{methodConfig[payment.method].icon}</span>
-                        {methodConfig[payment.method].label}
+                        <span>{methodConfig[payment.method]?.icon}</span>
+                        {methodConfig[payment.method]?.label || payment.method}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusConfig[payment.status].color}>
-                        {statusConfig[payment.status].label}
+                      <Badge className={statusConfig[payment.status]?.color || 'bg-gray-100 text-gray-700'}>
+                        {statusConfig[payment.status]?.label || payment.status}
                       </Badge>
                     </TableCell>
                     <TableCell>

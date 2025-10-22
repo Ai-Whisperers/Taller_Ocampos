@@ -174,7 +174,7 @@ export const mockRequest = {
   body: {},
   params: {},
   query: {},
-  user: null,
+  user: undefined,
 };
 
 export const mockResponse = () => {

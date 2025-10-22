@@ -1,5 +1,5 @@
 import { render, screen, userEvent } from '../../../tests/utils/test-utils';
-import { DashboardLayout } from './DashboardLayout';
+import DashboardLayout from './DashboardLayout';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({

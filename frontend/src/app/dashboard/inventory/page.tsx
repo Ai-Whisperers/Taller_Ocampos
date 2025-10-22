@@ -34,6 +34,15 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showLowStock, setShowLowStock] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    description: '',
+    currentStock: 0,
+    minStock: 0,
+    unitPrice: 0
+  });
 
   useEffect(() => {
     fetchParts();
@@ -42,9 +51,32 @@ export default function InventoryPage() {
   const fetchParts = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      const params = new URLSearchParams();
+      if (showLowStock) {
+        params.append('lowStock', 'true');
+      }
 
-      // Mock data for now
+      const response = await fetch(`http://localhost:3001/api/inventory?${params}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setParts(data.data.map((item: any) => ({
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          category: 'General',
+          brand: '',
+          stock: item.currentStock,
+          minStock: item.minStock,
+          cost: item.unitPrice * 0.6,
+          salePrice: item.unitPrice,
+          supplier: '',
+          location: ''
+        })));
+        return;
+      }
+
+      // Fallback mock data if API fails
       const mockParts: Part[] = [
         {
           id: '1',
@@ -98,12 +130,59 @@ export default function InventoryPage() {
 
   const handleStockUpdate = async (partId: string, newStock: number) => {
     try {
-      // TODO: Update stock API call
-      toast.success('Stock actualizado exitosamente');
-      fetchParts();
+      const response = await fetch(`http://localhost:3001/api/inventory/${partId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentStock: newStock }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Stock actualizado exitosamente');
+        fetchParts();
+      } else {
+        toast.error(result.message || 'Error al actualizar stock');
+      }
     } catch (error) {
       console.error('Error updating stock:', error);
       toast.error('Error al actualizar stock');
+    }
+  };
+
+  const handleCreateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.code || formData.unitPrice === 0) {
+      toast.error('Por favor complete los campos requeridos');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Repuesto creado exitosamente');
+        setShowCreateForm(false);
+        setFormData({
+          name: '',
+          code: '',
+          description: '',
+          currentStock: 0,
+          minStock: 0,
+          unitPrice: 0
+        });
+        fetchParts();
+      } else {
+        toast.error(result.message || 'Error al crear repuesto');
+      }
+    } catch (error) {
+      console.error('Error creating item:', error);
+      toast.error('Error al crear repuesto');
     }
   };
 
@@ -149,15 +228,97 @@ export default function InventoryPage() {
               <AlertTriangle className="h-4 w-4 mr-2" />
               Stock Bajo
             </Button>
-            <Button onClick={() => {
-              // TODO: Navigate to add part form
-              toast.info('Formulario de nuevo repuesto en desarrollo');
-            }}>
+            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Repuesto
             </Button>
           </div>
         </div>
+
+        {showCreateForm && (
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">Nuevo Repuesto</h3>
+            <form onSubmit={handleCreateItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre *</label>
+                <Input
+                  type="text"
+                  placeholder="Nombre del repuesto"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Código *</label>
+                <Input
+                  type="text"
+                  placeholder="Código único"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <Input
+                  type="text"
+                  placeholder="Descripción del repuesto"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Stock Actual *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.currentStock === 0 ? '' : formData.currentStock}
+                  onChange={(e) => setFormData({ ...formData, currentStock: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Stock Mínimo *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.minStock === 0 ? '' : formData.minStock}
+                  onChange={(e) => setFormData({ ...formData, minStock: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Precio Unitario (₲) *</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.unitPrice === 0 ? '' : formData.unitPrice}
+                  onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-2 flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Crear Repuesto
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -218,7 +379,7 @@ export default function InventoryPage() {
                           size="icon"
                           onClick={() => {
                             // TODO: Navigate to edit part
-                            toast.info('Edición en desarrollo');
+                            toast('Edición en desarrollo');
                           }}
                         >
                           <Edit2 className="h-4 w-4" />

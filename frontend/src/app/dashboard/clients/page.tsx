@@ -69,33 +69,14 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/clients');
-      // const data = await response.json();
+      const response = await fetch('http://localhost:3001/api/clients');
+      const data = await response.json();
 
-      // Mock data for now
-      const mockClients: Client[] = [
-        {
-          id: '1',
-          name: 'Juan Pérez',
-          phone: '0981234567',
-          email: 'juan@example.com',
-          address: 'Asunción, Paraguay',
-          vehicleCount: 2,
-          lastVisit: '2024-01-15',
-        },
-        {
-          id: '2',
-          name: 'María González',
-          phone: '0971234567',
-          email: 'maria@example.com',
-          address: 'San Lorenzo, Paraguay',
-          vehicleCount: 1,
-          lastVisit: '2024-01-20',
-        },
-      ];
-
-      setClients(mockClients);
+      if (data.success) {
+        setClients(data.data);
+      } else {
+        toast.error('Error al cargar clientes');
+      }
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Error al cargar clientes');
@@ -107,11 +88,33 @@ export default function ClientsPage() {
   const onSubmit = async (data: ClientFormData) => {
     try {
       if (editingClient) {
-        // TODO: Update client API call
-        toast.success('Cliente actualizado exitosamente');
+        const response = await fetch(`http://localhost:3001/api/clients/${editingClient.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Cliente actualizado exitosamente');
+        } else {
+          toast.error(result.message || 'Error al actualizar cliente');
+          return;
+        }
       } else {
-        // TODO: Create client API call
-        toast.success('Cliente creado exitosamente');
+        const response = await fetch('http://localhost:3001/api/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Cliente creado exitosamente');
+        } else {
+          toast.error(result.message || 'Error al crear cliente');
+          return;
+        }
       }
 
       reset();
@@ -138,9 +141,17 @@ export default function ClientsPage() {
   const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de eliminar este cliente?')) {
       try {
-        // TODO: Delete client API call
-        toast.success('Cliente eliminado exitosamente');
-        fetchClients();
+        const response = await fetch(`http://localhost:3001/api/clients/${id}`, {
+          method: 'DELETE',
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          toast.success('Cliente eliminado exitosamente');
+          fetchClients();
+        } else {
+          toast.error(result.message || 'Error al eliminar cliente');
+        }
       } catch (error) {
         console.error('Error deleting client:', error);
         toast.error('Error al eliminar cliente');
@@ -156,17 +167,17 @@ export default function ClientsPage() {
   );
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
-        <p className="text-gray-500 mt-2">
+    <div className="p-4 md:p-6">
+      <div className="mb-4 md:mb-6 pt-12 lg:pt-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Clientes</h1>
+        <p className="text-sm md:text-base text-gray-500 mt-1 md:mt-2">
           Gestiona la información de tus clientes
         </p>
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="p-3 md:p-4 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -184,25 +195,26 @@ export default function ClientsPage() {
                 <Button onClick={() => {
                   setEditingClient(null);
                   reset();
-                }}>
+                }} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Cliente
+                  <span className="hidden xs:inline">Nuevo Cliente</span>
+                  <span className="xs:hidden">Nuevo</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg md:text-xl">
                       {editingClient ? 'Editar Cliente' : 'Nuevo Cliente'}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-sm">
                       {editingClient
                         ? 'Modifica la información del cliente'
                         : 'Ingresa la información del nuevo cliente'}
                     </DialogDescription>
                   </DialogHeader>
 
-                  <div className="space-y-4 py-4">
+                  <div className="space-y-3 md:space-y-4 py-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nombre completo</Label>
                       <Input
@@ -253,15 +265,15 @@ export default function ClientsPage() {
                     </div>
                   </div>
 
-                  <DialogFooter>
+                  <DialogFooter className="flex-col sm:flex-row gap-2">
                     <Button type="button" variant="outline" onClick={() => {
                       setIsAddDialogOpen(false);
                       setEditingClient(null);
                       reset();
-                    }}>
+                    }} className="w-full sm:w-auto">
                       Cancelar
                     </Button>
-                    <Button type="submit">
+                    <Button type="submit" className="w-full sm:w-auto">
                       {editingClient ? 'Actualizar' : 'Guardar'}
                     </Button>
                   </DialogFooter>
@@ -271,74 +283,82 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-3 md:mx-0">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-gray-500">Cargando clientes...</p>
+            <div className="p-6 md:p-8 text-center">
+              <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-3 md:mt-4 text-sm md:text-base text-gray-500">Cargando clientes...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-6 md:p-8 text-center text-sm md:text-base text-gray-500">
               {searchTerm
                 ? 'No se encontraron clientes con ese criterio'
                 : 'No hay clientes registrados aún'}
             </div>
           ) : (
-            <Table>
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Vehículos</TableHead>
-                  <TableHead>Última visita</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="text-xs md:text-sm">Nombre</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden sm:table-cell">Teléfono</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">Email</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden lg:table-cell">Dirección</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">Vehículos</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden xl:table-cell">Última visita</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClients.map((client) => (
                   <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.phone}</TableCell>
-                    <TableCell>{client.email || '-'}</TableCell>
-                    <TableCell>{client.address}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium text-xs md:text-sm">
+                      <div>
+                        <div>{client.name}</div>
+                        <div className="sm:hidden text-gray-500 text-xs">{client.phone}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs md:text-sm hidden sm:table-cell">{client.phone}</TableCell>
+                    <TableCell className="text-xs md:text-sm hidden md:table-cell">{client.email || '-'}</TableCell>
+                    <TableCell className="text-xs md:text-sm hidden lg:table-cell truncate max-w-[200px]">{client.address}</TableCell>
+                    <TableCell className="text-xs md:text-sm hidden md:table-cell">
                       <div className="flex items-center">
-                        <Car className="h-4 w-4 mr-1 text-gray-400" />
+                        <Car className="h-3 w-3 md:h-4 md:w-4 mr-1 text-gray-400" />
                         {client.vehicleCount}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs md:text-sm hidden xl:table-cell">
                       {client.lastVisit
                         ? new Date(client.lastVisit).toLocaleDateString('es-PY')
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1 md:gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 md:h-10 md:w-10"
                           onClick={() => {
                             // TODO: Navigate to client details
-                            toast.info('Vista de detalles en desarrollo');
+                            toast('Vista de detalles en desarrollo');
                           }}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3 md:h-4 md:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 md:h-10 md:w-10"
                           onClick={() => handleEdit(client)}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-3 w-3 md:h-4 md:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 md:h-10 md:w-10"
                           onClick={() => handleDelete(client.id)}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>

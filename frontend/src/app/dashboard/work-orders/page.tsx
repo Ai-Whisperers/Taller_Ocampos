@@ -48,57 +48,54 @@ export default function WorkOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    vehicleId: '',
+    clientId: '',
+    description: '',
+    status: 'draft',
+    totalAmount: 0
+  });
 
   useEffect(() => {
     fetchWorkOrders();
+    fetchClientsAndVehicles();
   }, []);
+
+  const fetchClientsAndVehicles = async () => {
+    try {
+      const [clientsRes, vehiclesRes] = await Promise.all([
+        fetch('http://localhost:3001/api/clients?limit=1000'),
+        fetch('http://localhost:3001/api/vehicles?limit=1000')
+      ]);
+      const clientsData = await clientsRes.json();
+      const vehiclesData = await vehiclesRes.json();
+
+      if (clientsData.success) setClients(clientsData.data);
+      if (vehiclesData.success) setVehicles(vehiclesData.data);
+    } catch (error) {
+      console.error('Error fetching clients/vehicles:', error);
+    }
+  };
 
   const fetchWorkOrders = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
 
-      // Mock data for now
-      const mockOrders: WorkOrder[] = [
-        {
-          id: '1',
-          orderNumber: 'OT-2024-001',
-          vehicleId: '1',
-          vehicleInfo: 'Toyota Corolla - ABC123',
-          clientName: 'Juan Pérez',
-          status: 'in-progress',
-          description: 'Cambio de aceite y filtros',
-          totalAmount: 150000,
-          createdAt: '2024-01-15T10:00:00',
-          updatedAt: '2024-01-15T14:30:00',
-        },
-        {
-          id: '2',
-          orderNumber: 'OT-2024-002',
-          vehicleId: '2',
-          vehicleInfo: 'Ford Ranger - XYZ789',
-          clientName: 'María González',
-          status: 'pending',
-          description: 'Revisión de frenos',
-          totalAmount: 280000,
-          createdAt: '2024-01-20T09:00:00',
-          updatedAt: '2024-01-20T09:00:00',
-        },
-        {
-          id: '3',
-          orderNumber: 'OT-2024-003',
-          vehicleId: '1',
-          vehicleInfo: 'Toyota Corolla - ABC123',
-          clientName: 'Juan Pérez',
-          status: 'ready',
-          description: 'Alineación y balanceo',
-          totalAmount: 120000,
-          createdAt: '2024-01-22T11:00:00',
-          updatedAt: '2024-01-22T16:00:00',
-        },
-      ];
+      const response = await fetch(`http://localhost:3001/api/work-orders?${params}`);
+      const data = await response.json();
 
-      setWorkOrders(mockOrders);
+      if (data.success) {
+        setWorkOrders(data.data);
+      } else {
+        toast.error('Error al cargar órdenes de trabajo');
+      }
     } catch (error) {
       console.error('Error fetching work orders:', error);
       toast.error('Error al cargar órdenes de trabajo');
@@ -109,12 +106,58 @@ export default function WorkOrdersPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      // TODO: Update status API call
-      toast.success('Estado actualizado exitosamente');
-      fetchWorkOrders();
+      const response = await fetch(`http://localhost:3001/api/work-orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Estado actualizado exitosamente');
+        fetchWorkOrders();
+      } else {
+        toast.error(result.message || 'Error al actualizar estado');
+      }
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Error al actualizar estado');
+    }
+  };
+
+  const handleCreateWorkOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.vehicleId || !formData.clientId || !formData.description) {
+      toast.error('Por favor complete todos los campos requeridos');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/work-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Orden de trabajo creada exitosamente');
+        setShowCreateForm(false);
+        setFormData({
+          vehicleId: '',
+          clientId: '',
+          description: '',
+          status: 'draft',
+          totalAmount: 0
+        });
+        fetchWorkOrders();
+      } else {
+        toast.error(result.message || 'Error al crear orden');
+      }
+    } catch (error) {
+      console.error('Error creating work order:', error);
+      toast.error('Error al crear orden de trabajo');
     }
   };
 
@@ -166,15 +209,108 @@ export default function WorkOrdersPage() {
                 <SelectItem value="closed">Cerrado</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => {
-              // TODO: Navigate to new work order form
-              toast.info('Formulario de nueva orden en desarrollo');
-            }}>
+            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
               <Plus className="h-4 w-4 mr-2" />
               Nueva Orden
             </Button>
           </div>
         </div>
+
+        {showCreateForm && (
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">Nueva Orden de Trabajo</h3>
+            <form onSubmit={handleCreateWorkOrder} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Cliente *</label>
+                <Select
+                  value={formData.clientId}
+                  onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Vehículo *</label>
+                <Select
+                  value={formData.vehicleId}
+                  onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar vehículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.brand} {vehicle.model} - {vehicle.licensePlate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Descripción *</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md p-2 min-h-[80px]"
+                  placeholder="Descripción del trabajo a realizar..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Estado</label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Borrador</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="in-progress">En Progreso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Monto Total (₲)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
+                />
+              </div>
+
+              <div className="md:col-span-2 flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Crear Orden
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -216,9 +352,9 @@ export default function WorkOrdersPage() {
                         {order.description}
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusConfig[order.status].color}>
+                        <Badge className={statusConfig[order.status]?.color || 'bg-gray-100 text-gray-700'}>
                           <StatusIcon className="h-3 w-3 mr-1" />
-                          {statusConfig[order.status].label}
+                          {statusConfig[order.status]?.label || order.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
@@ -234,7 +370,7 @@ export default function WorkOrdersPage() {
                             size="icon"
                             onClick={() => {
                               // TODO: Navigate to order details
-                              toast.info('Vista de detalles en desarrollo');
+                              toast('Vista de detalles en desarrollo');
                             }}
                           >
                             <Eye className="h-4 w-4" />
@@ -244,7 +380,7 @@ export default function WorkOrdersPage() {
                             size="icon"
                             onClick={() => {
                               // TODO: Navigate to edit order
-                              toast.info('Edición en desarrollo');
+                              toast('Edición en desarrollo');
                             }}
                           >
                             <Edit2 className="h-4 w-4" />
