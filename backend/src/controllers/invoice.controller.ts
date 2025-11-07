@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient, InvoiceStatus } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { InvoiceStatus } from '../types/enums';
 
 export class InvoiceController {
   async getAll(req: Request, res: Response) {

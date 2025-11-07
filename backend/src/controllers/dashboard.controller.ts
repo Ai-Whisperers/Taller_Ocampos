@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { WorkOrderStatus, InvoiceStatus } from '../types/enums';
 
 export class DashboardController {
   async getStats(req: Request, res: Response) {
@@ -32,8 +31,8 @@ export class DashboardController {
           },
         }),
         prisma.$queryRaw<Array<{ count: bigint }>>`
-          SELECT COUNT(*) as count FROM "Part"
-          WHERE "currentStock" <= "minStock" AND "isActive" = true
+          SELECT COUNT(*) as count FROM Part
+          WHERE currentStock <= minStock AND isActive = 1
         `,
         prisma.invoice.count({
           where: {

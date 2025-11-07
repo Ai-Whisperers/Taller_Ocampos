@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient, WorkOrderStatus } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { WorkOrderStatus } from '../types/enums';
 
 export class WorkOrderController {
   async getAll(req: Request, res: Response) {
@@ -273,13 +272,12 @@ export class WorkOrderController {
         });
       }
 
-      // Delete related records first
-      await prisma.workOrderService.deleteMany({ where: { workOrderId: id } });
-      await prisma.workOrderPart.deleteMany({ where: { workOrderId: id } });
-      await prisma.attachment.deleteMany({ where: { workOrderId: id } });
-
-      await prisma.workOrder.delete({
-        where: { id },
+      // Delete related records in a transaction for data integrity
+      await prisma.$transaction(async (tx) => {
+        await tx.workOrderService.deleteMany({ where: { workOrderId: id } });
+        await tx.workOrderPart.deleteMany({ where: { workOrderId: id } });
+        await tx.attachment.deleteMany({ where: { workOrderId: id } });
+        await tx.workOrder.delete({ where: { id } });
       });
 
       logger.info(`Work order deleted: ${workOrder.orderNumber}`);

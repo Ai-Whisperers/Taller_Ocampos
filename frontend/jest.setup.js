@@ -28,6 +28,17 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
+// Mock react-hot-toast
+jest.mock('react-hot-toast', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+    loading: jest.fn(),
+    remove: jest.fn(),
+  },
+  Toaster: () => null,
+}))
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { StockMovementType } from '../types/enums';
 
 export class InventoryController {
   async getAllParts(req: Request, res: Response) {
@@ -23,10 +22,33 @@ export class InventoryController {
       if (category) where.category = String(category);
       if (supplierId) where.supplierId = String(supplierId);
 
+      // Handle low stock filter separately with raw query
       if (lowStock === 'true') {
-        where.OR = [
-          { currentStock: { lte: prisma.part.fields.minStock } },
-        ];
+        // For SQLite, we need to use a raw query to compare fields
+        const lowStockParts = await prisma.$queryRaw`
+          SELECT * FROM Part
+          WHERE currentStock <= minStock
+          AND isActive = 1
+          ORDER BY name ASC
+          LIMIT ${Number(limit)} OFFSET ${skip}
+        ` as any[];
+
+        const totalLowStock = await prisma.$queryRaw`
+          SELECT COUNT(*) as count FROM Part
+          WHERE currentStock <= minStock
+          AND isActive = 1
+        ` as any[];
+
+        return res.json({
+          success: true,
+          data: lowStockParts,
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total: totalLowStock[0]?.count || 0,
+            pages: Math.ceil((totalLowStock[0]?.count || 0) / Number(limit)),
+          },
+        });
       }
 
       const [parts, total] = await Promise.all([
@@ -327,23 +349,26 @@ export class InventoryController {
         });
       }
 
-      // Update part stock
-      await prisma.part.update({
-        where: { id },
-        data: { currentStock: newStock },
-      });
+      // Update stock and create movement record in a transaction
+      const movement = await prisma.$transaction(async (tx) => {
+        await tx.part.update({
+          where: { id },
+          data: { currentStock: newStock },
+        });
 
-      // Create stock movement record
-      const movement = await prisma.stockMovement.create({
-        data: {
-          partId: id,
-          type,
-          quantity: type === 'ADJUSTMENT' ? quantity - part.currentStock : quantity,
-          previousStock: part.currentStock,
-          currentStock: newStock,
-          reference,
-          notes,
-        },
+        const stockMovement = await tx.stockMovement.create({
+          data: {
+            partId: id,
+            type,
+            quantity: type === 'ADJUSTMENT' ? quantity - part.currentStock : quantity,
+            previousStock: part.currentStock,
+            currentStock: newStock,
+            reference,
+            notes,
+          },
+        });
+
+        return stockMovement;
       });
 
       logger.info(`Stock adjusted for part ${part.code}: ${part.currentStock} -> ${newStock}`);
@@ -402,11 +427,13 @@ export class InventoryController {
 
   async getLowStock(req: Request, res: Response) {
     try {
+      // SQLite-compatible syntax
       const parts = await prisma.$queryRaw`
-        SELECT * FROM "Part"
-        WHERE "currentStock" <= "minStock"
-        AND "isActive" = true
-        ORDER BY ("currentStock"::float / NULLIF("minStock", 0)) ASC
+        SELECT * FROM Part
+        WHERE currentStock <= minStock
+        AND minStock > 0
+        AND isActive = 1
+        ORDER BY (CAST(currentStock AS REAL) / minStock) ASC
       `;
 
       res.json({

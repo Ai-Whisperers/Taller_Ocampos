@@ -14,18 +14,30 @@ const createTestQueryClient = () =>
         retry: false,
       },
     },
+    logger: {
+      log: () => {},
+      warn: () => {},
+      error: () => {},
+    },
   });
 
 interface AllTheProvidersProps {
   children: React.ReactNode;
 }
 
+// Mock AuthContext for testing
+const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
 const AllTheProviders = ({ children }: AllTheProvidersProps) => {
   const queryClient = createTestQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <MockAuthProvider>
+        {children}
+      </MockAuthProvider>
     </QueryClientProvider>
   );
 };

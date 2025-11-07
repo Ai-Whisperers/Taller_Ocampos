@@ -47,14 +47,9 @@ const menuItems = [
     icon: Package,
   },
   {
-    title: 'Facturas',
-    href: '/dashboard/invoices',
+    title: 'Facturación',
+    href: '/dashboard/billing',
     icon: FileText,
-  },
-  {
-    title: 'Pagos',
-    href: '/dashboard/payments',
-    icon: CreditCard,
   },
   {
     title: 'Configuración',

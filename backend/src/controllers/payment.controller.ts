@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient, PaymentMethod } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { PaymentMethod, PaymentStatus, InvoiceStatus } from '../types/enums';
 
 export class PaymentController {
   async getAll(req: Request, res: Response) {
@@ -141,42 +140,47 @@ export class PaymentController {
         });
       }
 
-      // Generate payment number
-      const paymentCount = await prisma.payment.count();
-      const paymentNumber = `PAY${String(paymentCount + 1).padStart(6, '0')}`;
+      // Create payment and update invoice in a transaction
+      const payment = await prisma.$transaction(async (tx) => {
+        // Generate payment number
+        const paymentCount = await tx.payment.count();
+        const paymentNumber = `PAY${String(paymentCount + 1).padStart(6, '0')}`;
 
-      const payment = await prisma.payment.create({
-        data: {
-          paymentNumber,
-          invoiceId,
-          clientId: invoice.clientId,
-          userId: req.user?.id!,
-          amount,
-          method,
-          reference,
-          notes,
-          paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
-        },
-        include: {
-          client: true,
-          invoice: true,
-        },
-      });
+        const newPayment = await tx.payment.create({
+          data: {
+            paymentNumber,
+            invoiceId,
+            clientId: invoice.clientId,
+            userId: req.user?.id!,
+            amount,
+            method,
+            reference,
+            notes,
+            paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+          },
+          include: {
+            client: true,
+            invoice: true,
+          },
+        });
 
-      // Update invoice paid amount and status
-      const newPaidAmount = Number(invoice.paidAmount) + amount;
-      const invoiceStatus = newPaidAmount >= Number(invoice.total)
-        ? 'PAID'
-        : newPaidAmount > 0
-        ? 'PARTIALLY_PAID'
-        : invoice.status;
+        // Update invoice paid amount and status
+        const newPaidAmount = Number(invoice.paidAmount) + amount;
+        const invoiceStatus = newPaidAmount >= Number(invoice.total)
+          ? InvoiceStatus.PAID
+          : newPaidAmount > 0
+          ? InvoiceStatus.PARTIALLY_PAID
+          : invoice.status;
 
-      await prisma.invoice.update({
-        where: { id: invoiceId },
-        data: {
-          paidAmount: newPaidAmount,
-          status: invoiceStatus,
-        },
+        await tx.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            paidAmount: newPaidAmount,
+            status: invoiceStatus,
+          },
+        });
+
+        return newPayment;
       });
 
       logger.info(`New payment created: ${payment.paymentNumber}`);
@@ -269,10 +273,10 @@ export class PaymentController {
         const totalPaid = allPayments._sum.amount || 0;
         const invoice = existingPayment.invoice;
         const invoiceStatus = totalPaid >= Number(invoice.total)
-          ? 'PAID'
+          ? InvoiceStatus.PAID
           : totalPaid > 0
-          ? 'PARTIALLY_PAID'
-          : 'SENT';
+          ? InvoiceStatus.PARTIALLY_PAID
+          : InvoiceStatus.SENT;
 
         await prisma.invoice.update({
           where: { id: existingPayment.invoiceId },
@@ -331,10 +335,10 @@ export class PaymentController {
       const totalPaid = remainingPayments._sum.amount || 0;
       const invoice = payment.invoice;
       const invoiceStatus = totalPaid >= Number(invoice.total)
-        ? 'PAID'
+        ? InvoiceStatus.PAID
         : totalPaid > 0
-        ? 'PARTIALLY_PAID'
-        : 'SENT';
+        ? InvoiceStatus.PARTIALLY_PAID
+        : InvoiceStatus.SENT;
 
       await prisma.invoice.update({
         where: { id: payment.invoiceId },

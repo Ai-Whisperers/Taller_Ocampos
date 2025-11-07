@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { WorkOrderStatus } from '../types/enums';
 
 export class VehicleController {
   async getAll(req: Request, res: Response) {
@@ -388,10 +387,11 @@ export class VehicleController {
       const workOrders = await prisma.workOrder.findMany({
         where: {
           vehicleId: id,
-          status: 'COMPLETED',
+          status: WorkOrderStatus.COMPLETED,
         },
         orderBy: { completionDate: 'desc' },
         include: {
+          vehicle: true,
           services: {
             include: {
               service: true,

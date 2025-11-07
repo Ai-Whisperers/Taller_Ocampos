@@ -17,6 +17,15 @@ interface DashboardStats {
   weeklyGrowth: number;
 }
 
+interface RecentWorkOrder {
+  id: string;
+  orderNumber: string;
+  vehicleInfo: string;
+  clientName: string;
+  description: string;
+  status: string;
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
@@ -28,6 +37,7 @@ export default function DashboardPage() {
     todayWorkOrders: 0,
     weeklyGrowth: 0,
   });
+  const [recentWorkOrders, setRecentWorkOrders] = useState<RecentWorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +46,35 @@ export default function DashboardPage() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await api.get('/dashboard/stats');
-      if (response.data.success) {
-        setStats(response.data.data.stats);
+      const [statsResponse, workOrdersResponse] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/work-orders?limit=3')
+      ]);
+
+      if (statsResponse.data.success) {
+        setStats(statsResponse.data.data.stats);
+      }
+
+      if (workOrdersResponse.data.success && workOrdersResponse.data.data) {
+        // Map the work order data to match our interface
+        const statusMap: { [key: string]: string } = {
+          'DRAFT': 'draft',
+          'PENDING_APPROVAL': 'pending',
+          'IN_PROGRESS': 'in-progress',
+          'READY_FOR_PICKUP': 'ready',
+          'COMPLETED': 'closed',
+          'CANCELLED': 'closed'
+        };
+
+        const mappedOrders = workOrdersResponse.data.data.map((order: any) => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          vehicleInfo: order.vehicle ? `${order.vehicle.brand} ${order.vehicle.model} - ${order.vehicle.licensePlate}` : 'N/A',
+          clientName: order.client ? order.client.name : 'N/A',
+          description: order.description,
+          status: statusMap[order.status] || 'pending'
+        }));
+        setRecentWorkOrders(mappedOrders);
       }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -163,35 +199,47 @@ export default function DashboardPage() {
             <CardTitle className="text-lg md:text-xl">Órdenes de Trabajo Recientes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 md:space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm md:text-base truncate">Honda Civic - ABC123</p>
-                  <p className="text-xs md:text-sm text-gray-600 truncate">Juan Pérez • Cambio de aceite</p>
-                </div>
-                <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded whitespace-nowrap self-start sm:self-center">
-                  En Progreso
-                </span>
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm md:text-base truncate">Toyota Corolla - XYZ789</p>
-                  <p className="text-xs md:text-sm text-gray-600 truncate">María García • Revisión general</p>
-                </div>
-                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded whitespace-nowrap self-start sm:self-center">
-                  Completado
-                </span>
+            ) : recentWorkOrders.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No hay órdenes de trabajo registradas
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm md:text-base truncate">Ford Focus - DEF456</p>
-                  <p className="text-xs md:text-sm text-gray-600 truncate">Carlos López • Reparación de frenos</p>
-                </div>
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded whitespace-nowrap self-start sm:self-center">
-                  Pendiente
-                </span>
+            ) : (
+              <div className="space-y-3 md:space-y-4">
+                {recentWorkOrders.map((order) => {
+                  const statusColors = {
+                    'draft': 'bg-gray-100 text-gray-800',
+                    'pending': 'bg-blue-100 text-blue-800',
+                    'in-progress': 'bg-yellow-100 text-yellow-800',
+                    'ready': 'bg-green-100 text-green-800',
+                    'closed': 'bg-gray-100 text-gray-800'
+                  };
+                  const statusLabels = {
+                    'draft': 'Borrador',
+                    'pending': 'Pendiente',
+                    'in-progress': 'En Progreso',
+                    'ready': 'Listo',
+                    'closed': 'Cerrado'
+                  };
+                  return (
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm md:text-base truncate">{order.vehicleInfo}</p>
+                        <p className="text-xs md:text-sm text-gray-600 truncate">
+                          {order.clientName} • {order.description}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap self-start sm:self-center ${statusColors[order.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
+                        {statusLabels[order.status as keyof typeof statusLabels] || order.status}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 

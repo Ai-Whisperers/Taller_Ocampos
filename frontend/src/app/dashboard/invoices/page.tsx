@@ -47,6 +47,11 @@ export default function InvoicesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalBilled: 0,
+    pending: 0,
+    overdue: 0
+  });
   const [formData, setFormData] = useState({
     clientId: '',
     workOrderId: '',
@@ -84,7 +89,7 @@ export default function InvoicesPage() {
       const data = await response.json();
 
       if (data.success) {
-        setInvoices(data.data.map((inv: any) => ({
+        const mappedInvoices = data.data.map((inv: any) => ({
           id: inv.id,
           invoiceNumber: inv.invoiceNumber,
           clientName: inv.clientName,
@@ -94,7 +99,19 @@ export default function InvoicesPage() {
           issueDate: new Date(inv.issueDate).toISOString().split('T')[0],
           dueDate: new Date(new Date(inv.issueDate).getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           paymentDate: inv.status === 'paid' ? new Date(inv.updatedAt).toISOString().split('T')[0] : undefined
-        })));
+        }));
+        setInvoices(mappedInvoices);
+
+        // Calculate stats from real data
+        const totalBilled = mappedInvoices.reduce((sum: number, inv: any) => sum + inv.amount, 0);
+        const pending = mappedInvoices
+          .filter((inv: any) => inv.status === 'pending')
+          .reduce((sum: number, inv: any) => sum + inv.amount, 0);
+        const overdue = mappedInvoices
+          .filter((inv: any) => inv.status === 'overdue')
+          .reduce((sum: number, inv: any) => sum + inv.amount, 0);
+
+        setStats({ totalBilled, pending, overdue });
       } else {
         toast.error('Error al cargar facturas');
       }
@@ -183,7 +200,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Facturado</p>
-              <p className="text-2xl font-bold">₲ 880,000</p>
+              <p className="text-2xl font-bold">₲ {stats.totalBilled.toLocaleString('es-PY')}</p>
             </div>
             <FileText className="h-8 w-8 text-blue-500" />
           </div>
@@ -192,7 +209,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold">₲ 280,000</p>
+              <p className="text-2xl font-bold">₲ {stats.pending.toLocaleString('es-PY')}</p>
             </div>
             <DollarSign className="h-8 w-8 text-yellow-500" />
           </div>
@@ -201,7 +218,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Vencidas</p>
-              <p className="text-2xl font-bold">₲ 450,000</p>
+              <p className="text-2xl font-bold">₲ {stats.overdue.toLocaleString('es-PY')}</p>
             </div>
             <DollarSign className="h-8 w-8 text-red-500" />
           </div>
