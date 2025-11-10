@@ -77,11 +77,10 @@ io.on('connection', (socket) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
-const SOCKET_PORT = process.env.SOCKET_PORT || 3002;
 
 httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
-  logger.info(`Socket.IO running on port ${SOCKET_PORT}`);
+  logger.info(`Socket.IO running on same port (${PORT})`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
 });
 
