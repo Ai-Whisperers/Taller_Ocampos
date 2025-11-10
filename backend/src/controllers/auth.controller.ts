@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 import { prisma } from '../lib/prisma';
 import { UserRole } from '../types/enums';
@@ -44,10 +44,11 @@ export class AuthController {
       });
 
       // Generate JWT
+      const jwtSecret = process.env.JWT_SECRET || 'default-secret';
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET || 'default-secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        jwtSecret,
+        { expiresIn: '7d' }
       );
 
       logger.info(`New user registered: ${user.email}`);
@@ -96,10 +97,11 @@ export class AuthController {
       }
 
       // Generate JWT
+      const jwtSecret = process.env.JWT_SECRET || 'default-secret';
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET || 'default-secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        jwtSecret,
+        { expiresIn: '7d' }
       );
 
       logger.info(`User logged in: ${user.email}`);

@@ -1,16 +1,16 @@
-// SQLite-compatible version of the schema
-// Use this temporarily until PostgreSQL is set up
+// PostgreSQL schema for production deployment
+// Compatible with Vercel Postgres, Neon, Railway, Render
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Note: SQLite doesn't support enums, so we use String with validation
+// PostgreSQL native enums for type safety
 
 model User {
   id        String   @id @default(uuid())
