@@ -3,8 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
-  // Enable standalone output for Docker
-  output: 'standalone',
+  // Enable standalone output for Docker only (disabled for Vercel)
+  output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
 
   // Image optimization
   images: {

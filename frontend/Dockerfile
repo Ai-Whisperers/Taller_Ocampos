@@ -30,6 +30,9 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 # Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Enable standalone build for Docker
+ENV DOCKER_BUILD=true
+
 RUN npm run build
 
 # Stage 3: Runner (Production)
