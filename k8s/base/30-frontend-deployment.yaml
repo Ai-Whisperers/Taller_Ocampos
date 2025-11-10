@@ -1,0 +1,108 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: taller-mecanico
+  labels:
+    app: taller-frontend
+    tier: frontend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: taller-frontend
+  template:
+    metadata:
+      labels:
+        app: taller-frontend
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: taller-mecanico/frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: taller-frontend-config
+              key: NEXT_PUBLIC_APP_NAME
+        - name: NEXT_PUBLIC_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: taller-frontend-config
+              key: NEXT_PUBLIC_API_URL
+        - name: NEXT_PUBLIC_SOCKET_URL
+          valueFrom:
+            configMapKeyRef:
+              name: taller-frontend-config
+              key: NEXT_PUBLIC_SOCKET_URL
+        # This will be overridden in prod overlay with actual domain
+        - name: NEXT_PUBLIC_APP_URL
+          value: "http://localhost"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: taller-mecanico
+  labels:
+    app: taller-frontend
+    tier: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: taller-frontend

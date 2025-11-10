@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taller-backend-config
+  namespace: taller-mecanico
+  labels:
+    app: taller-backend
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  SOCKET_PORT: "3002"
+  JWT_EXPIRES_IN: "7d"
+  MAX_FILE_SIZE: "10485760"
+  UPLOAD_DIR: "./uploads"
+  LOG_LEVEL: "info"
+  # Database connection will use service DNS
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "taller_mecanico"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taller-frontend-config
+  namespace: taller-mecanico
+  labels:
+    app: taller-frontend
+data:
+  # These will be injected at build time or runtime
+  NEXT_PUBLIC_APP_NAME: "Taller Mecánico"
+  # URLs will be set per environment (dev/prod overlay)
+  NEXT_PUBLIC_API_URL: "http://backend-service:3001/api"
+  NEXT_PUBLIC_SOCKET_URL: "http://backend-service:3002"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: taller-mecanico
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: "taller_mecanico"
+  POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"

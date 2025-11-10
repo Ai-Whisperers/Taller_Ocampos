@@ -1,0 +1,176 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: taller-mecanico
+  labels:
+    app: taller-backend
+    tier: api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: taller-backend
+  template:
+    metadata:
+      labels:
+        app: taller-backend
+        tier: api
+    spec:
+      containers:
+      - name: backend
+        image: taller-mecanico/backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3001
+          name: http
+          protocol: TCP
+        - containerPort: 3002
+          name: websocket
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: PORT
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: taller-backend-secret
+              key: JWT_SECRET
+        - name: JWT_EXPIRES_IN
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: JWT_EXPIRES_IN
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: DATABASE_URL
+        - name: MAX_FILE_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: MAX_FILE_SIZE
+        - name: UPLOAD_DIR
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: UPLOAD_DIR
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: taller-backend-config
+              key: LOG_LEVEL
+        - name: FRONTEND_URL
+          value: "http://frontend-service:3000"
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+      initContainers:
+      - name: migrate-database
+        image: taller-mecanico/backend:latest
+        command: ['sh', '-c', 'npx prisma migrate deploy']
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: DATABASE_URL
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: backend-uploads-pvc
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-uploads-pvc
+  namespace: taller-mecanico
+  labels:
+    app: taller-backend
+spec:
+  accessModes:
+    - ReadWriteMany  # Allows multiple pods to write
+  resources:
+    requests:
+      storage: 5Gi
+  # Uncomment and specify storageClassName for your cluster
+  # storageClassName: nfs  # or other RWX-capable storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: taller-mecanico
+  labels:
+    app: taller-backend
+    tier: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3001
+    targetPort: 3001
+    protocol: TCP
+    name: http
+  - port: 3002
+    targetPort: 3002
+    protocol: TCP
+    name: websocket
+  selector:
+    app: taller-backend
+  sessionAffinity: ClientIP  # For WebSocket stickiness

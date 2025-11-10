@@ -1,0 +1,115 @@
+---
+# Ingress for production access
+# Requires an Ingress Controller (nginx, traefik, etc.)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: taller-ingress
+  namespace: taller-mecanico
+  labels:
+    app: taller-mecanico
+  annotations:
+    # Nginx Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    # Enable WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: "backend-service"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    # CORS (if needed)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # Certificate manager (if using cert-manager)
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  # TLS configuration
+  tls:
+  - hosts:
+    - taller.example.com
+    - api.taller.example.com
+    secretName: taller-tls-secret
+  rules:
+  # Frontend application
+  - host: taller.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+  # Backend API
+  - host: api.taller.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 3001
+      # WebSocket endpoint
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 3002
+
+---
+# Alternative: Single host with path-based routing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: taller-ingress-single-host
+  namespace: taller-mecanico
+  labels:
+    app: taller-mecanico
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - taller.example.com
+    secretName: taller-tls-secret
+  rules:
+  - host: taller.example.com
+    http:
+      paths:
+      # Frontend
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+      # Backend API
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 3001
+      # WebSocket
+      - path: /socket.io(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 3002

@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: taller-mecanico
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  # Note: 02-secrets.yaml.template is not included - create actual secrets manually
+  - 10-postgres-pvc.yaml
+  - 11-postgres-statefulset.yaml
+  - 20-backend-deployment.yaml
+  - 30-frontend-deployment.yaml
+  - 40-ingress.yaml
+  - 50-hpa.yaml
+  - 60-network-policy.yaml
+
+commonLabels:
+  app.kubernetes.io/name: taller-mecanico
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize

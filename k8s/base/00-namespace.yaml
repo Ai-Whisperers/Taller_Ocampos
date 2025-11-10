@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taller-mecanico
+  labels:
+    name: taller-mecanico
+    app: taller-mecanico
+    environment: production
