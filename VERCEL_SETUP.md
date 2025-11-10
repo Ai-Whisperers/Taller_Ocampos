@@ -16,8 +16,8 @@ Taller_Ocampos/
 │   └── src/              ← Application code
 ├── backend/              ← Express API (deploy to Render)
 ├── k8s/                  ← Kubernetes configs
-└── vercel/               ← Build scripts and documentation
-    └── scripts/          ← (No longer used - Vercel handles builds)
+├── VERCEL_SETUP.md       ← This guide
+└── .vercelignore         ← Files to exclude from deployment
 ```
 
 ---
@@ -84,6 +84,8 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 
 The `vercel.json` file is located in `frontend/vercel.json` (alongside package.json).
 
+This follows Vercel's **classical deployment pattern** for Next.js applications.
+
 **Key configuration:**
 ```json
 {
@@ -97,16 +99,20 @@ The `vercel.json` file is located in `frontend/vercel.json` (alongside package.j
 ```
 
 **What's configured:**
+- ✅ Framework preset: Next.js (for auto-detection)
 - ✅ Security headers (XSS, CSRF, clickjacking protection)
-- ✅ API proxy to backend (placeholder URL)
+- ✅ API proxy to backend (placeholder URL to update)
 - ✅ Clean URLs and trailing slash behavior
 - ✅ Deployment region (iad1 - US East)
 
-**What's NOT in vercel.json:**
-- ❌ `buildCommand` - Let Vercel use package.json scripts
-- ❌ `installCommand` - Let Vercel auto-detect
-- ❌ `outputDirectory` - Let Vercel use Next.js default
-- ❌ `rootDirectory` - Cannot be set here (use dashboard)
+**What Vercel handles automatically:**
+- ✅ Build command from package.json scripts
+- ✅ Install command (auto-detected npm/yarn/pnpm)
+- ✅ Output directory (.next for Next.js)
+- ✅ Node.js version detection
+- ✅ Environment variable injection
+
+**Note:** Root Directory must be set to `frontend` in Vercel Dashboard (cannot be configured in vercel.json)
 
 ---
 
@@ -291,6 +297,8 @@ Vercel automatically deploys on:
 
 ## 🎯 Summary
 
+This is a **classical Vercel + Next.js deployment** with monorepo support.
+
 **What to configure in Vercel Dashboard:**
 1. Root Directory: `frontend` (CRITICAL)
 2. Environment Variables: `NEXT_PUBLIC_API_URL`, etc.
@@ -298,19 +306,28 @@ Vercel automatically deploys on:
 
 **What to configure in vercel.json (frontend/):**
 - Security headers
-- API rewrites
+- API rewrites/proxies
 - Region selection
-- URL behavior
+- URL behavior (clean URLs, trailing slash)
 
-**What to let Vercel handle automatically:**
-- Dependency installation
-- Build command execution
-- Output directory detection
-- Framework configuration
+**What Vercel handles automatically (no custom scripts needed):**
+- Dependency installation (npm/yarn/pnpm auto-detection)
+- Build command execution (from package.json)
+- Output directory detection (.next for Next.js)
+- Framework configuration and optimization
+- Serverless function generation
+
+**Classical deployment means:**
+- ✅ No custom build orchestration
+- ✅ No centralized config folder
+- ✅ Standard Next.js project structure
+- ✅ Vercel's automatic optimizations
+- ✅ Simpler maintenance and debugging
 
 ---
 
-**Guide Version:** 1.0
+**Guide Version:** 1.1
 **Last Updated:** 2025-11-10
+**Deployment Pattern:** Classical Vercel + Next.js
 **Deployment Target:** Vercel (Frontend only)
 **Time to Deploy:** ~10 minutes (first time)

@@ -214,21 +214,16 @@ postgresql://user:pass@ep-cool-name-123456.us-east-2.aws.neon.tech/taller_mecani
 Your repo now has:
 
 **Root Level:**
-- `vercel.json` - Vercel configuration for monorepo
-- `.env.vercel.example` - Environment variable template
 - `.vercelignore` - Files excluded from deployment
+- `.env.vercel.example` - Environment variable template
+- `VERCEL_SETUP.md` - Complete Vercel deployment guide
 
-**Vercel Folder (Orchestration):**
-- `vercel/scripts/install.sh` - Custom install orchestration
-- `vercel/scripts/build.sh` - Production build pipeline
-- `vercel/scripts/validate-env.js` - Environment validation
-- `vercel/config/production.json` - Production settings
-- `vercel/README.md` - Complete configuration guide
+**Frontend (Deploy to Vercel):**
+- `frontend/vercel.json` - Vercel configuration (classical deployment)
+- `frontend/next.config.js` - Next.js configuration (dual mode: Vercel + Docker)
+- `frontend/package.json` - Dependencies and build scripts
 
-**Frontend:**
-- `frontend/next.config.js` - Dual mode (Vercel + Docker)
-
-**Backend:**
+**Backend (Deploy to Render):**
 - Standard Express app (no changes needed)
 - Compatible with Render/Railway/Fly.io
 

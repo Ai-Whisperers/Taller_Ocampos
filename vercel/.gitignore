@@ -1,9 +1,0 @@
-# Vercel folder gitignore
-# Temporary files and build artifacts
-
-*.log
-.vercel/
-.env
-.env.local
-.env*.local
-node_modules/
