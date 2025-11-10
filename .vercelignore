@@ -77,8 +77,8 @@ lerna-debug.log*
 **/coverage/
 **/.cache/
 
-# Scripts not needed for deployment
-scripts/
+# Root-level scripts not needed for deployment (keep vercel/scripts/)
+/scripts/
 
 # Makefile
 Makefile
