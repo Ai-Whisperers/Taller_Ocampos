@@ -216,9 +216,16 @@ Your repo now has:
 **Root Level:**
 - `vercel.json` - Vercel configuration for monorepo
 - `.env.vercel.example` - Environment variable template
+- `.vercelignore` - Files excluded from deployment
+
+**Vercel Folder (Orchestration):**
+- `vercel/scripts/install.sh` - Custom install orchestration
+- `vercel/scripts/build.sh` - Production build pipeline
+- `vercel/scripts/validate-env.js` - Environment validation
+- `vercel/config/production.json` - Production settings
+- `vercel/README.md` - Complete configuration guide
 
 **Frontend:**
-- `frontend/vercel.json` - Next.js specific config
 - `frontend/next.config.js` - Dual mode (Vercel + Docker)
 
 **Backend:**

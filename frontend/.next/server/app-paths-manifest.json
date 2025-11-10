@@ -3,13 +3,13 @@
   "/page": "app/page.js",
   "/login/page": "app/login/page.js",
   "/register/page": "app/register/page.js",
-  "/dashboard/invoices/page": "app/dashboard/invoices/page.js",
-  "/dashboard/inventory/page": "app/dashboard/inventory/page.js",
-  "/dashboard/clients/page": "app/dashboard/clients/page.js",
-  "/dashboard/billing/page": "app/dashboard/billing/page.js",
   "/dashboard/payments/page": "app/dashboard/payments/page.js",
+  "/dashboard/inventory/page": "app/dashboard/inventory/page.js",
+  "/dashboard/invoices/page": "app/dashboard/invoices/page.js",
+  "/dashboard/billing/page": "app/dashboard/billing/page.js",
   "/dashboard/vehicles/page": "app/dashboard/vehicles/page.js",
+  "/dashboard/clients/page": "app/dashboard/clients/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/settings/page": "app/dashboard/settings/page.js",
-  "/dashboard/work-orders/page": "app/dashboard/work-orders/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/dashboard/work-orders/page": "app/dashboard/work-orders/page.js"
 }
