@@ -17,11 +17,6 @@
       "NEXT_PUBLIC_APP_NAME": "Taller Mecánico"
     }
   },
-  "functions": {
-    "frontend/src/app/**": {
-      "maxDuration": 10
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
