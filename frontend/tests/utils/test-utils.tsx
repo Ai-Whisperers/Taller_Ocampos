@@ -187,3 +187,8 @@ export const mockFetch = (response: any, status: number = 200) => {
     } as Response)
   );
 };
+
+// Export additional helper modules
+export * from './form-helpers';
+export * from './assertion-helpers';
+export * from './accessibility-helpers';
