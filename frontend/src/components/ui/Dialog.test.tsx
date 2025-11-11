@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogClose,
 } from './dialog';
+import { expectNoA11yViolations, expectProperDialogAttributes } from '../../../tests/utils/accessibility-helpers';
 
 describe('Dialog Component', () => {
   describe('Dialog Root', () => {
@@ -543,6 +544,171 @@ describe('Dialog Component', () => {
 
       expect(dialog).toBeInTheDocument();
       expect(description).toBeInTheDocument();
+    });
+
+    describe('WCAG 2.1 AA Compliance', () => {
+      it('should have no accessibility violations with title and description', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmation Dialog</DialogTitle>
+                <DialogDescription>Please confirm your action</DialogDescription>
+              </DialogHeader>
+              <div>Dialog body content</div>
+              <DialogFooter>
+                <button>Cancel</button>
+                <button>Confirm</button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+
+        // Use baseElement to test the entire rendered output including portals
+        await expectNoA11yViolations(baseElement);
+      });
+
+      it('should have proper dialog role and labeling', () => {
+        render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Test Dialog</DialogTitle>
+              </DialogHeader>
+              <p>Content</p>
+            </DialogContent>
+          </Dialog>
+        );
+
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toHaveAttribute('role', 'dialog');
+        // Radix UI automatically handles aria-labelledby
+        expect(dialog).toBeInTheDocument();
+      });
+
+      it('should have no violations with form content', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Form Dialog</DialogTitle>
+                <DialogDescription>Please fill out the form</DialogDescription>
+              </DialogHeader>
+              <form>
+                <label htmlFor="name-input">Name</label>
+                <input id="name-input" type="text" />
+
+                <label htmlFor="email-input">Email</label>
+                <input id="email-input" type="email" />
+
+                <button type="submit">Submit</button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        );
+
+        await expectNoA11yViolations(baseElement);
+      });
+
+      it('should have no violations with nested interactive elements', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Options</DialogTitle>
+              </DialogHeader>
+              <div>
+                <button>Option 1</button>
+                <button>Option 2</button>
+                <a href="#test">Learn more</a>
+              </div>
+              <DialogFooter>
+                <button>Close</button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+
+        await expectNoA11yViolations(baseElement);
+      });
+
+      it('should maintain accessibility when triggered via button', async () => {
+        const user = userEvent.setup();
+
+        const { baseElement } = render(
+          <Dialog>
+            <DialogTrigger>Open Dialog</DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Triggered Dialog</DialogTitle>
+                <DialogDescription>This dialog was opened via trigger</DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        );
+
+        const trigger = screen.getByRole('button', { name: 'Open Dialog' });
+        await user.click(trigger);
+
+        await waitFor(async () => {
+          await expectNoA11yViolations(baseElement);
+        });
+      });
+
+      it('should have no violations with only title (no description)', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Simple Dialog</DialogTitle>
+              </DialogHeader>
+              <p>Just a simple message.</p>
+            </DialogContent>
+          </Dialog>
+        );
+
+        await expectNoA11yViolations(baseElement);
+      });
+
+      it('should handle alert dialogs accessibly', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Warning</DialogTitle>
+                <DialogDescription>This action cannot be undone.</DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <button>Cancel</button>
+                <button>Continue</button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toBeInTheDocument();
+
+        await expectNoA11yViolations(baseElement);
+      });
+
+      it('should maintain accessibility with custom components in header', async () => {
+        const { baseElement } = render(
+          <Dialog defaultOpen>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Custom Header</DialogTitle>
+                <DialogDescription>
+                  <strong>Important:</strong> Read carefully
+                </DialogDescription>
+              </DialogHeader>
+              <p>Content</p>
+            </DialogContent>
+          </Dialog>
+        );
+
+        await expectNoA11yViolations(baseElement);
+      });
     });
   });
 

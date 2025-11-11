@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Input } from './input';
+import { expectNoA11yViolations } from '../../../tests/utils/accessibility-helpers';
 
 describe('Input Component', () => {
   describe('Basic Rendering', () => {
@@ -292,6 +293,137 @@ describe('Input Component', () => {
       await user.type(input, '👍🎉🚀');
 
       expect(input).toHaveValue('👍🎉🚀');
+    });
+  });
+
+  describe('Accessibility (WCAG 2.1 AA)', () => {
+    it('should have no accessibility violations (basic input)', async () => {
+      const { container } = render(
+        <label>
+          Username
+          <Input />
+        </label>
+      );
+      await expectNoA11yViolations(container);
+    });
+
+    it('should have no accessibility violations with aria-label', async () => {
+      const { container } = render(<Input aria-label="Search" />);
+      await expectNoA11yViolations(container);
+    });
+
+    it('should have no accessibility violations when disabled', async () => {
+      const { container } = render(
+        <label>
+          Disabled Field
+          <Input disabled />
+        </label>
+      );
+      await expectNoA11yViolations(container);
+    });
+
+    it('should have no accessibility violations when required', async () => {
+      const { container } = render(
+        <label>
+          Email (required)
+          <Input type="email" required aria-label="Email address" />
+        </label>
+      );
+      await expectNoA11yViolations(container);
+    });
+
+    it('should have no accessibility violations with error state', async () => {
+      const { container } = render(
+        <>
+          <label htmlFor="error-input">Email</label>
+          <Input
+            id="error-input"
+            type="email"
+            aria-invalid="true"
+            aria-describedby="error-message"
+          />
+          <span id="error-message">Please enter a valid email</span>
+        </>
+      );
+      await expectNoA11yViolations(container);
+    });
+
+    it('should work with associated label element', async () => {
+      const { container } = render(
+        <>
+          <label htmlFor="username-input">Username</label>
+          <Input id="username-input" />
+        </>
+      );
+
+      const input = screen.getByLabelText('Username');
+      expect(input).toBeInTheDocument();
+
+      await expectNoA11yViolations(container);
+    });
+
+    it('should have no violations for all input types', async () => {
+      const types = ['text', 'email', 'password', 'tel', 'url', 'search'] as const;
+
+      for (const type of types) {
+        const { container } = render(
+          <label>
+            {type} input
+            <Input type={type} />
+          </label>
+        );
+        await expectNoA11yViolations(container);
+      }
+    });
+
+    it('should maintain accessibility with placeholder', async () => {
+      const { container } = render(
+        <label>
+          Search
+          <Input placeholder="Enter search term..." />
+        </label>
+      );
+
+      // Placeholder should not be sole accessibility label
+      const input = screen.getByPlaceholderText('Enter search term...');
+      expect(input).toBeInTheDocument();
+
+      await expectNoA11yViolations(container);
+    });
+
+    it('should support screen reader hints with aria-describedby', async () => {
+      const { container } = render(
+        <>
+          <label htmlFor="password-input">Password</label>
+          <Input
+            id="password-input"
+            type="password"
+            aria-describedby="password-hint"
+          />
+          <div id="password-hint">Must be at least 8 characters</div>
+        </>
+      );
+
+      const input = screen.getByLabelText('Password');
+      expect(input).toHaveAttribute('aria-describedby', 'password-hint');
+
+      await expectNoA11yViolations(container);
+    });
+
+    it('should be accessible in form context', async () => {
+      const { container } = render(
+        <form>
+          <label htmlFor="name">Name</label>
+          <Input id="name" required />
+
+          <label htmlFor="email">Email</label>
+          <Input id="email" type="email" required />
+
+          <button type="submit">Submit</button>
+        </form>
+      );
+
+      await expectNoA11yViolations(container);
     });
   });
 });
