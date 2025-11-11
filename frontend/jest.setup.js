@@ -4,6 +4,19 @@ import '@testing-library/jest-dom'
 // Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001/api'
 
+// Note: MSW (Mock Service Worker) setup is available but not enabled globally
+// to avoid polyfill complexity in jest-environment-jsdom.
+//
+// To use MSW in your tests, import and setup manually:
+// ```javascript
+// import { server } from '@/tests/mocks/server';
+// import { http, HttpResponse } from 'msw';
+//
+// beforeAll(() => server.listen());
+// afterEach(() => server.resetHandlers());
+// afterAll(() => server.close());
+// ```
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
