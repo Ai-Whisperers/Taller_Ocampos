@@ -582,4 +582,236 @@ describe('AuthContext - API Calls', () => {
       });
     });
   });
+
+  describe('Edge Cases - Malformed Responses', () => {
+    it('should handle login response with missing user data gracefully', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            token: 'mock-jwt-token',
+            // Missing user object
+          },
+        },
+      };
+
+      (api.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('admin@test.com', 'password123');
+      });
+
+      await waitFor(() => {
+        // Should still redirect even if user is undefined
+        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      });
+    });
+
+    it('should handle error with empty response data', async () => {
+      const mockError = {
+        response: {
+          data: {},
+        },
+      };
+
+      (api.post as jest.Mock).mockRejectedValueOnce(mockError);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      await act(async () => {
+        await expect(
+          result.current.register({
+            email: 'user@test.com',
+            password: 'password123',
+            name: 'Test User',
+          })
+        ).rejects.toEqual(mockError);
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Registration failed');
+    });
+  });
+
+  describe('Role-Based User Scenarios', () => {
+    it('should handle admin user login', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            user: {
+              id: '1',
+              email: 'admin@test.com',
+              name: 'Admin User',
+              role: 'admin',
+            },
+            token: 'admin-jwt-token',
+          },
+        },
+      };
+
+      (api.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.login('admin@test.com', 'password123');
+      });
+
+      expect(result.current.user?.role).toBe('admin');
+    });
+
+    it('should handle mechanic user login', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            user: {
+              id: '2',
+              email: 'mechanic@test.com',
+              name: 'Mechanic User',
+              role: 'mechanic',
+            },
+            token: 'mechanic-jwt-token',
+          },
+        },
+      };
+
+      (api.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.login('mechanic@test.com', 'password123');
+      });
+
+      expect(result.current.user?.role).toBe('mechanic');
+    });
+
+    it('should handle receptionist user login', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            user: {
+              id: '3',
+              email: 'receptionist@test.com',
+              name: 'Receptionist User',
+              role: 'receptionist',
+            },
+            token: 'receptionist-jwt-token',
+          },
+        },
+      };
+
+      (api.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.login('receptionist@test.com', 'password123');
+      });
+
+      expect(result.current.user?.role).toBe('receptionist');
+    });
+
+    it('should handle user with all optional fields', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            user: {
+              id: '4',
+              email: 'fulluser@test.com',
+              name: 'Full User',
+              role: 'user',
+              phone: '0991234567',
+            },
+            token: 'full-user-jwt-token',
+          },
+        },
+      };
+
+      (api.post as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.login('fulluser@test.com', 'password123');
+      });
+
+      expect(result.current.user).toEqual(mockResponse.data.data.user);
+      expect(result.current.user?.phone).toBe('0991234567');
+    });
+  });
+
+  describe('Integration Flows', () => {
+    it('should handle failed login followed by successful login', async () => {
+      const mockError = {
+        response: {
+          data: {
+            message: 'Invalid credentials',
+          },
+        },
+      };
+
+      const mockSuccess = {
+        data: {
+          data: {
+            user: {
+              id: '1',
+              email: 'user@test.com',
+              name: 'Test User',
+              role: 'user',
+            },
+            token: 'jwt-token',
+          },
+        },
+      };
+
+      (api.post as jest.Mock)
+        .mockRejectedValueOnce(mockError)
+        .mockResolvedValueOnce(mockSuccess);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      // Failed login
+      await act(async () => {
+        await expect(
+          result.current.login('user@test.com', 'wrongpassword')
+        ).rejects.toEqual(mockError);
+      });
+
+      expect(result.current.user).toBeNull();
+      expect(toast.error).toHaveBeenCalledWith('Invalid credentials');
+
+      // Successful login
+      await act(async () => {
+        await result.current.login('user@test.com', 'password123');
+      });
+
+      await waitFor(() => {
+        expect(result.current.user).toEqual(mockSuccess.data.data.user);
+      });
+      expect(toast.success).toHaveBeenCalledWith('Login successful!');
+    });
+  });
 });
