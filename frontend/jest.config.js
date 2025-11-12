@@ -19,6 +19,9 @@ const customJestConfig = {
     '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
+  transformIgnorePatterns: [
+    '/node_modules/(?!@faker-js)',
+  ],
   testMatch: [
     '**/__tests__/**/*.{js,jsx,ts,tsx}',
     '**/?(*.)+(spec|test).{js,jsx,ts,tsx}',
