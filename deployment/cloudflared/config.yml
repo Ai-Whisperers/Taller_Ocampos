@@ -1,0 +1,18 @@
+tunnel: taller-ocampos
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  # Frontend (Next.js)
+  - hostname: taller-ocampos.ai-whisperers.org
+    service: http://localhost:3000
+
+  # API Backend
+  - hostname: api.taller-ocampos.ai-whisperers.org
+    service: http://localhost:3001
+
+  # WebSocket/Socket.io
+  - hostname: ws.taller-ocampos.ai-whisperers.org
+    service: http://localhost:3002
+
+  # Catch-all rule (required)
+  - service: http_status:404
