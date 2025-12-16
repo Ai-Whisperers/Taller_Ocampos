@@ -6,8 +6,8 @@ services:
     plan: free
     rootDir: backend
     numInstances: 1
-    buildCommand: NODE_ENV=development npm install && npx prisma generate && npm run build
-    startCommand: NODE_ENV=production npx prisma migrate deploy && npm start
+    buildCommand: npm install --production=false && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
