@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: taller-ocampos-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: taller-ocampos-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        value: https://frontend-hf02rj509-ai-whisperers1.vercel.app
+
+databases:
+  - name: taller-ocampos-db
+    plan: free
+    region: oregon
