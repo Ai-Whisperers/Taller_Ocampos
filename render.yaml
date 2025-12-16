@@ -6,25 +6,18 @@ services:
     plan: free
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npm start
+    startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3001
+        value: 10000
       - key: DATABASE_URL
-        fromDatabase:
-          name: taller-ocampos-db
-          property: connectionString
+        value: postgresql://taller_ocampos_db_user:WC9tiU734Rw7Es2A23UJ1Eh4pnoQXYtt@dpg-d50obp9r0fns738vriog-a.oregon-postgres.render.com:5432/taller_ocampos_db
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: FRONTEND_URL
         value: https://frontend-hf02rj509-ai-whisperers1.vercel.app
-
-databases:
-  - name: taller-ocampos-db
-    plan: free
-    region: oregon
