@@ -7,7 +7,7 @@ services:
     rootDir: backend
     numInstances: 1
     buildCommand: npm install && node node_modules/prisma/build/index.js generate && npm run build
-    startCommand: node node_modules/prisma/build/index.js migrate deploy && npm start
+    startCommand: node node_modules/prisma/build/index.js migrate resolve --rolled-back 20250925220648_init && node node_modules/prisma/build/index.js migrate deploy && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
