@@ -10,20 +10,60 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wrench } from 'lucide-react';
+import { Wrench, Check, X } from 'lucide-react';
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100, 'El nombre es muy largo'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[a-z]/, 'Debe contener al menos una minúscula')
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
   confirmPassword: z.string(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (val.length >= 6 && val.length <= 20),
+      'El teléfono debe tener entre 6 y 20 caracteres'
+    ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
   path: ['confirmPassword'],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+// Password strength checker
+function PasswordStrength({ password }: { password: string }) {
+  const checks = [
+    { label: 'Al menos 8 caracteres', valid: password.length >= 8 },
+    { label: 'Una mayúscula', valid: /[A-Z]/.test(password) },
+    { label: 'Una minúscula', valid: /[a-z]/.test(password) },
+    { label: 'Un número', valid: /[0-9]/.test(password) },
+  ];
+
+  if (!password) return null;
+
+  return (
+    <div className="mt-2 space-y-1">
+      {checks.map((check, i) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          {check.valid ? (
+            <Check className="h-3 w-3 text-green-500" />
+          ) : (
+            <X className="h-3 w-3 text-red-400" />
+          )}
+          <span className={check.valid ? 'text-green-600' : 'text-gray-500'}>
+            {check.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -33,10 +73,13 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
+
+  const password = watch('password', '');
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -68,11 +111,13 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Nombre completo</Label>
+              <Label htmlFor="name">Nombre completo <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 type="text"
                 autoComplete="name"
+                disabled={loading}
+                placeholder="Juan Pérez"
                 {...register('name')}
                 className="mt-1"
               />
@@ -82,11 +127,13 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
               <Input
                 id="email"
                 type="email"
                 autoComplete="email"
+                disabled={loading}
+                placeholder="correo@ejemplo.com"
                 {...register('email')}
                 className="mt-1"
               />
@@ -101,6 +148,8 @@ export default function RegisterPage() {
                 id="phone"
                 type="tel"
                 autoComplete="tel"
+                disabled={loading}
+                placeholder="0981234567"
                 {...register('phone')}
                 className="mt-1"
               />
@@ -110,25 +159,28 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Contraseña <span className="text-red-500">*</span></Label>
               <Input
                 id="password"
                 type="password"
                 autoComplete="new-password"
+                disabled={loading}
                 {...register('password')}
                 className="mt-1"
               />
+              <PasswordStrength password={password} />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Label htmlFor="confirmPassword">Confirmar contraseña <span className="text-red-500">*</span></Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
+                disabled={loading}
                 {...register('confirmPassword')}
                 className="mt-1"
               />

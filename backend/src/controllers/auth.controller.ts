@@ -18,7 +18,7 @@ export class AuthController {
       if (existingUser) {
         return res.status(409).json({
           success: false,
-          message: 'User with this email already exists',
+          message: 'Ya existe un usuario con este email',
         });
       }
 
@@ -65,7 +65,7 @@ export class AuthController {
       logger.error('Registration error:', error);
       res.status(500).json({
         success: false,
-        message: 'Error registering user',
+        message: 'Error al registrar usuario. Intente nuevamente.',
       });
     }
   }
@@ -82,7 +82,7 @@ export class AuthController {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: 'Email o contraseña incorrectos',
         });
       }
 
@@ -92,7 +92,7 @@ export class AuthController {
       if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: 'Email o contraseña incorrectos',
         });
       }
 

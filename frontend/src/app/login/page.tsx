@@ -66,6 +66,8 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
+                disabled={loading}
+                placeholder="correo@ejemplo.com"
                 {...register('email')}
                 className="mt-1"
               />
@@ -80,6 +82,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
+                disabled={loading}
                 {...register('password')}
                 className="mt-1"
               />

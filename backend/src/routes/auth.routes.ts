@@ -12,10 +12,10 @@ router.post(
   '/register',
   authLimiter,
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-    body('name').notEmpty().trim(),
-    body('phone').optional().trim().isLength({ min: 6, max: 20 }),
+    body('email').isEmail().withMessage('Email inválido').normalizeEmail(),
+    body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
+    body('name').notEmpty().withMessage('El nombre es requerido').trim(),
+    body('phone').optional().trim().isLength({ min: 6, max: 20 }).withMessage('El teléfono debe tener entre 6 y 20 caracteres'),
   ],
   validateRequest,
   authController.register
@@ -25,8 +25,8 @@ router.post(
   '/login',
   authLimiter,
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
+    body('email').isEmail().withMessage('Email inválido').normalizeEmail(),
+    body('password').notEmpty().withMessage('La contraseña es requerida'),
   ],
   validateRequest,
   authController.login
