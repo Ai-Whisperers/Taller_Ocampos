@@ -21,4 +21,4 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: FRONTEND_URL
-        value: https://frontend-np2t2n95b-ai-whisperers1.vercel.app
+        value: https://frontend-tau-taupe.vercel.app
