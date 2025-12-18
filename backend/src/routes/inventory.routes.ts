@@ -132,7 +132,7 @@ router.post(
     body('name').notEmpty().trim(),
     body('taxId').optional().trim(),
     body('email').optional().isEmail(),
-    body('phone').optional().isMobilePhone('any'),
+    body('phone').optional().trim().isLength({ min: 6, max: 20 }),
     body('address').optional().trim(),
     body('website').optional().isURL(),
     body('notes').optional().trim(),
@@ -149,7 +149,7 @@ router.put(
     body('name').optional().notEmpty().trim(),
     body('taxId').optional().trim(),
     body('email').optional().isEmail(),
-    body('phone').optional().isMobilePhone('any'),
+    body('phone').optional().trim().isLength({ min: 6, max: 20 }),
     body('address').optional().trim(),
     body('website').optional().isURL(),
     body('notes').optional().trim(),
@@ -157,6 +157,81 @@ router.put(
   ],
   validateRequest,
   inventoryController.updateSupplier
+);
+
+// Get all services
+router.get(
+  '/services',
+  [
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 100 }),
+    query('search').optional().trim(),
+    query('categoryId').optional().isUUID(),
+  ],
+  validateRequest,
+  inventoryController.getAllServices
+);
+
+// Get single service
+router.get(
+  '/services/:id',
+  [param('id').isUUID()],
+  validateRequest,
+  inventoryController.getServiceById
+);
+
+// Create new service
+router.post(
+  '/services',
+  [
+    body('code').notEmpty().trim(),
+    body('name').notEmpty().trim(),
+    body('description').optional().trim(),
+    body('categoryId').optional().isUUID(),
+    body('basePrice').isFloat({ min: 0 }),
+    body('estimatedHours').optional().isFloat({ min: 0 }),
+  ],
+  validateRequest,
+  inventoryController.createService
+);
+
+// Update service
+router.put(
+  '/services/:id',
+  [
+    param('id').isUUID(),
+    body('name').optional().notEmpty().trim(),
+    body('description').optional().trim(),
+    body('categoryId').optional().isUUID(),
+    body('basePrice').optional().isFloat({ min: 0 }),
+    body('estimatedHours').optional().isFloat({ min: 0 }),
+    body('isActive').optional().isBoolean(),
+  ],
+  validateRequest,
+  inventoryController.updateService
+);
+
+// Delete service
+router.delete(
+  '/services/:id',
+  [param('id').isUUID()],
+  validateRequest,
+  authorize('ADMIN'),
+  inventoryController.deleteService
+);
+
+// Get all service categories
+router.get('/service-categories', inventoryController.getAllServiceCategories);
+
+// Create service category
+router.post(
+  '/service-categories',
+  [
+    body('name').notEmpty().trim(),
+    body('description').optional().trim(),
+  ],
+  validateRequest,
+  inventoryController.createServiceCategory
 );
 
 export default router;

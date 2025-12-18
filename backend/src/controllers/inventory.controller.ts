@@ -565,4 +565,294 @@ export class InventoryController {
       });
     }
   }
+
+  // Service methods
+  async getAllServices(req: Request, res: Response) {
+    try {
+      const { page = 1, limit = 10, search, categoryId } = req.query;
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const where: any = { isActive: true };
+
+      if (search) {
+        where.OR = [
+          { code: { contains: String(search), mode: 'insensitive' } },
+          { name: { contains: String(search), mode: 'insensitive' } },
+        ];
+      }
+
+      if (categoryId) where.categoryId = String(categoryId);
+
+      const [services, total] = await Promise.all([
+        prisma.service.findMany({
+          where,
+          skip,
+          take: Number(limit),
+          orderBy: { name: 'asc' },
+          include: {
+            category: true,
+          },
+        }),
+        prisma.service.count({ where }),
+      ]);
+
+      res.json({
+        success: true,
+        data: services,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (error) {
+      logger.error('Error fetching services:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching services',
+      });
+    }
+  }
+
+  async getServiceById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const service = await prisma.service.findUnique({
+        where: { id },
+        include: {
+          category: true,
+        },
+      });
+
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found',
+        });
+      }
+
+      res.json({
+        success: true,
+        data: service,
+      });
+    } catch (error) {
+      logger.error('Error fetching service:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching service',
+      });
+    }
+  }
+
+  async createService(req: Request, res: Response) {
+    try {
+      const { code, name, description, categoryId, basePrice, estimatedHours } = req.body;
+
+      // Check if code already exists
+      const existingService = await prisma.service.findUnique({
+        where: { code },
+      });
+
+      if (existingService) {
+        return res.status(409).json({
+          success: false,
+          message: 'Service with this code already exists',
+        });
+      }
+
+      const service = await prisma.service.create({
+        data: {
+          code,
+          name,
+          description,
+          categoryId,
+          basePrice,
+          estimatedHours,
+        },
+        include: {
+          category: true,
+        },
+      });
+
+      logger.info(`New service created: ${service.code}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Service created successfully',
+        data: service,
+      });
+    } catch (error) {
+      logger.error('Error creating service:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error creating service',
+      });
+    }
+  }
+
+  async updateService(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { name, description, categoryId, basePrice, estimatedHours, isActive } = req.body;
+
+      const existingService = await prisma.service.findUnique({
+        where: { id },
+      });
+
+      if (!existingService) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found',
+        });
+      }
+
+      const service = await prisma.service.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          categoryId,
+          basePrice,
+          estimatedHours,
+          isActive,
+        },
+        include: {
+          category: true,
+        },
+      });
+
+      logger.info(`Service updated: ${service.code}`);
+
+      res.json({
+        success: true,
+        message: 'Service updated successfully',
+        data: service,
+      });
+    } catch (error) {
+      logger.error('Error updating service:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error updating service',
+      });
+    }
+  }
+
+  async deleteService(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const service = await prisma.service.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              workOrderServices: true,
+            },
+          },
+        },
+      });
+
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found',
+        });
+      }
+
+      if (service._count.workOrderServices > 0) {
+        // Soft delete - just deactivate
+        await prisma.service.update({
+          where: { id },
+          data: { isActive: false },
+        });
+
+        return res.json({
+          success: true,
+          message: 'Service deactivated (has existing work orders)',
+        });
+      }
+
+      await prisma.service.delete({ where: { id } });
+
+      logger.info(`Service deleted: ${service.code}`);
+
+      res.json({
+        success: true,
+        message: 'Service deleted successfully',
+      });
+    } catch (error) {
+      logger.error('Error deleting service:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error deleting service',
+      });
+    }
+  }
+
+  // Service Categories
+  async getAllServiceCategories(req: Request, res: Response) {
+    try {
+      const categories = await prisma.serviceCategory.findMany({
+        orderBy: { name: 'asc' },
+        include: {
+          _count: {
+            select: {
+              services: true,
+            },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: categories,
+      });
+    } catch (error) {
+      logger.error('Error fetching service categories:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching service categories',
+      });
+    }
+  }
+
+  async createServiceCategory(req: Request, res: Response) {
+    try {
+      const { name, description } = req.body;
+
+      const existingCategory = await prisma.serviceCategory.findUnique({
+        where: { name },
+      });
+
+      if (existingCategory) {
+        return res.status(409).json({
+          success: false,
+          message: 'Category with this name already exists',
+        });
+      }
+
+      const category = await prisma.serviceCategory.create({
+        data: {
+          name,
+          description,
+        },
+      });
+
+      logger.info(`New service category created: ${category.name}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Service category created successfully',
+        data: category,
+      });
+    } catch (error) {
+      logger.error('Error creating service category:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error creating service category',
+      });
+    }
+  }
 }

@@ -15,7 +15,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
     body('name').notEmpty().trim(),
-    body('phone').optional().isMobilePhone('any'),
+    body('phone').optional().trim().isLength({ min: 6, max: 20 }),
   ],
   validateRequest,
   authController.register

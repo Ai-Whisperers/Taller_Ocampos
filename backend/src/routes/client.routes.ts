@@ -36,7 +36,7 @@ router.post(
   [
     body('name').notEmpty().trim(),
     body('email').optional().isEmail().normalizeEmail(),
-    body('phone').notEmpty().isMobilePhone('any'),
+    body('phone').notEmpty().trim().isLength({ min: 6, max: 20 }),
     body('address').optional().trim(),
     body('taxId').optional().trim(),
     body('notes').optional().trim(),
@@ -52,7 +52,7 @@ router.put(
     param('id').isUUID(),
     body('name').optional().notEmpty().trim(),
     body('email').optional().isEmail().normalizeEmail(),
-    body('phone').optional().isMobilePhone('any'),
+    body('phone').optional().trim().isLength({ min: 6, max: 20 }),
     body('address').optional().trim(),
     body('taxId').optional().trim(),
     body('notes').optional().trim(),
