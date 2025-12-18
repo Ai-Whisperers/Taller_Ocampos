@@ -121,8 +121,15 @@ export default function VehiclesPage() {
 
   const onSubmit = async (data: VehicleFormData) => {
     try {
+      // Convert string fields to proper types for backend
+      const vehicleData = {
+        ...data,
+        year: parseInt(data.year, 10),
+        mileage: parseInt(data.mileage, 10),
+      };
+
       if (editingVehicle) {
-        const response = await api.put(`/vehicles/${editingVehicle.id}`, data);
+        const response = await api.put(`/vehicles/${editingVehicle.id}`, vehicleData);
 
         if (response.data.success) {
           toast.success('Vehículo actualizado exitosamente');
@@ -131,7 +138,7 @@ export default function VehiclesPage() {
           return;
         }
       } else {
-        const response = await api.post('/vehicles', data);
+        const response = await api.post('/vehicles', vehicleData);
 
         if (response.data.success) {
           toast.success('Vehículo creado exitosamente');

@@ -29,19 +29,20 @@ interface WorkOrder {
   vehicleId: string;
   vehicleInfo: string;
   clientName: string;
-  status: 'draft' | 'pending' | 'in-progress' | 'ready' | 'closed';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'IN_PROGRESS' | 'READY_FOR_PICKUP' | 'COMPLETED' | 'CANCELLED';
   description: string;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const statusConfig = {
-  draft: { label: 'Borrador', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
-  'in-progress': { label: 'En Progreso', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
-  ready: { label: 'Listo', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  closed: { label: 'Cerrado', color: 'bg-gray-100 text-gray-700', icon: CheckCircle },
+const statusConfig: Record<string, { label: string; color: string; icon: typeof FileText }> = {
+  DRAFT: { label: 'Borrador', color: 'bg-gray-100 text-gray-700', icon: FileText },
+  PENDING_APPROVAL: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+  IN_PROGRESS: { label: 'En Progreso', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
+  READY_FOR_PICKUP: { label: 'Listo', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  COMPLETED: { label: 'Completado', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  CANCELLED: { label: 'Cancelado', color: 'bg-red-100 text-red-700', icon: AlertCircle },
 };
 
 export default function WorkOrdersPage() {
@@ -56,7 +57,8 @@ export default function WorkOrdersPage() {
     vehicleId: '',
     clientId: '',
     description: '',
-    status: 'draft',
+    status: 'DRAFT',
+    laborRate: 50000, // Default labor rate in guaranies
     totalAmount: 0
   });
 
@@ -136,7 +138,8 @@ export default function WorkOrdersPage() {
           vehicleId: '',
           clientId: '',
           description: '',
-          status: 'draft',
+          status: 'DRAFT',
+          laborRate: 50000,
           totalAmount: 0
         });
         fetchWorkOrders();
@@ -190,11 +193,12 @@ export default function WorkOrdersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="draft">Borrador</SelectItem>
-                <SelectItem value="pending">Pendiente</SelectItem>
-                <SelectItem value="in-progress">En Progreso</SelectItem>
-                <SelectItem value="ready">Listo</SelectItem>
-                <SelectItem value="closed">Cerrado</SelectItem>
+                <SelectItem value="DRAFT">Borrador</SelectItem>
+                <SelectItem value="PENDING_APPROVAL">Pendiente</SelectItem>
+                <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                <SelectItem value="READY_FOR_PICKUP">Listo</SelectItem>
+                <SelectItem value="COMPLETED">Completado</SelectItem>
+                <SelectItem value="CANCELLED">Cancelado</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={() => setShowCreateForm(!showCreateForm)}>
@@ -267,9 +271,9 @@ export default function WorkOrdersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Borrador</SelectItem>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="in-progress">En Progreso</SelectItem>
+                    <SelectItem value="DRAFT">Borrador</SelectItem>
+                    <SelectItem value="PENDING_APPROVAL">Pendiente</SelectItem>
+                    <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

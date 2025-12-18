@@ -29,17 +29,19 @@ interface Payment {
   invoiceNumber: string;
   clientName: string;
   amount: number;
-  method: 'cash' | 'transfer' | 'card' | 'check';
+  method: 'CASH' | 'BANK_TRANSFER' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CHECK' | 'OTHER';
   status: 'completed' | 'pending' | 'failed';
   date: string;
   reference?: string;
 }
 
-const methodConfig = {
-  cash: { label: 'Efectivo', icon: '💵' },
-  transfer: { label: 'Transferencia', icon: '🏦' },
-  card: { label: 'Tarjeta', icon: '💳' },
-  check: { label: 'Cheque', icon: '📄' },
+const methodConfig: Record<string, { label: string; icon: string }> = {
+  CASH: { label: 'Efectivo', icon: '💵' },
+  BANK_TRANSFER: { label: 'Transferencia', icon: '🏦' },
+  CREDIT_CARD: { label: 'Tarjeta Crédito', icon: '💳' },
+  DEBIT_CARD: { label: 'Tarjeta Débito', icon: '💳' },
+  CHECK: { label: 'Cheque', icon: '📄' },
+  OTHER: { label: 'Otro', icon: '📝' },
 };
 
 const statusConfig = {
@@ -57,7 +59,7 @@ export default function PaymentsPage() {
   const [formData, setFormData] = useState({
     invoiceId: '',
     amount: 0,
-    paymentMethod: 'cash',
+    method: 'CASH',
     reference: ''
   });
 
@@ -71,8 +73,10 @@ export default function PaymentsPage() {
       const response = await api.get('/invoices?limit=1000');
 
       if (response.data.success) {
-        // Filter pending invoices
-        const pendingInvoices = response.data.data.filter((inv: any) => inv.status === 'pending' || inv.status === 'draft');
+        // Filter pending invoices (backend uses uppercase status)
+        const pendingInvoices = response.data.data.filter((inv: any) =>
+          inv.status === 'DRAFT' || inv.status === 'SENT' || inv.status === 'PARTIALLY_PAID'
+        );
         setInvoices(pendingInvoices);
       }
     } catch (error) {
@@ -112,7 +116,7 @@ export default function PaymentsPage() {
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.invoiceId || !formData.amount || !formData.paymentMethod) {
+    if (!formData.invoiceId || !formData.amount || !formData.method) {
       toast.error('Por favor complete los campos requeridos');
       return;
     }
@@ -126,7 +130,7 @@ export default function PaymentsPage() {
         setFormData({
           invoiceId: '',
           amount: 0,
-          paymentMethod: 'cash',
+          method: 'CASH',
           reference: ''
         });
         fetchPayments();
@@ -261,17 +265,19 @@ export default function PaymentsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Método de Pago *</label>
                 <Select
-                  value={formData.paymentMethod}
-                  onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                  value={formData.method}
+                  onValueChange={(value) => setFormData({ ...formData, method: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Efectivo 💵</SelectItem>
-                    <SelectItem value="transfer">Transferencia 🏦</SelectItem>
-                    <SelectItem value="card">Tarjeta 💳</SelectItem>
-                    <SelectItem value="check">Cheque 📄</SelectItem>
+                    <SelectItem value="CASH">Efectivo 💵</SelectItem>
+                    <SelectItem value="BANK_TRANSFER">Transferencia 🏦</SelectItem>
+                    <SelectItem value="CREDIT_CARD">Tarjeta Crédito 💳</SelectItem>
+                    <SelectItem value="DEBIT_CARD">Tarjeta Débito 💳</SelectItem>
+                    <SelectItem value="CHECK">Cheque 📄</SelectItem>
+                    <SelectItem value="OTHER">Otro 📝</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

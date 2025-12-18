@@ -30,9 +30,9 @@ import api from '@/lib/api';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
-  phone: z.string().min(1, 'El teléfono es requerido'),
+  phone: z.string().min(6, 'El teléfono debe tener al menos 6 caracteres').max(20, 'El teléfono no puede tener más de 20 caracteres'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
-  address: z.string().min(1, 'La dirección es requerida'),
+  address: z.string().optional().or(z.literal('')),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;

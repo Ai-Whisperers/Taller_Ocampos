@@ -56,10 +56,10 @@ export default function InvoicesPage() {
   const [formData, setFormData] = useState({
     clientId: '',
     workOrderId: '',
-    subtotal: 0,
-    tax: 0,
-    total: 0,
-    status: 'draft'
+    dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days from now
+    taxRate: 10, // 10% IVA
+    items: [{ description: '', quantity: 1, unitPrice: 0 }] as Array<{ description: string; quantity: number; unitPrice: number }>,
+    notes: ''
   });
 
   useEffect(() => {
@@ -135,22 +135,26 @@ export default function InvoicesPage() {
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.clientId || formData.total === 0) {
+    if (!formData.clientId || formData.items.length === 0 || formData.items.some(item => !item.description || item.unitPrice <= 0)) {
       toast.error('Por favor complete los campos requeridos');
       return;
     }
 
-    // Verify price matches work order if one is selected
-    if (formData.workOrderId) {
-      const selectedOrder = workOrders.find(order => order.id === formData.workOrderId);
-      if (selectedOrder && selectedOrder.totalAmount !== formData.subtotal) {
-        toast.error(`El monto debe coincidir con la orden de trabajo (₲ ${selectedOrder.totalAmount.toLocaleString('es-PY')})`);
-        return;
-      }
-    }
-
     try {
-      const response = await api.post('/invoices', formData);
+      const invoiceData = {
+        clientId: formData.clientId,
+        workOrderId: formData.workOrderId || undefined,
+        dueDate: new Date(formData.dueDate).toISOString(),
+        taxRate: formData.taxRate,
+        items: formData.items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice
+        })),
+        notes: formData.notes || undefined
+      };
+
+      const response = await api.post('/invoices', invoiceData);
 
       if (response.data.success) {
         toast.success('Factura creada exitosamente');
@@ -158,10 +162,10 @@ export default function InvoicesPage() {
         setFormData({
           clientId: '',
           workOrderId: '',
-          subtotal: 0,
-          tax: 0,
-          total: 0,
-          status: 'draft'
+          dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          taxRate: 10,
+          items: [{ description: '', quantity: 1, unitPrice: 0 }],
+          notes: ''
         });
         fetchInvoices();
       } else {
@@ -244,123 +248,172 @@ export default function InvoicesPage() {
         {showCreateForm && (
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg font-semibold mb-4">Nueva Factura</h3>
-            <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleCreateInvoice} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Cliente *</label>
+                  <Select
+                    value={formData.clientId}
+                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Orden de Trabajo (opcional)</label>
+                  <Select
+                    value={formData.workOrderId}
+                    onValueChange={(value) => {
+                      const selectedOrder = workOrders.find(order => order.id === value);
+                      if (selectedOrder) {
+                        setFormData({
+                          ...formData,
+                          workOrderId: value,
+                          clientId: selectedOrder.clientId || formData.clientId,
+                          items: [{ description: selectedOrder.description || 'Servicio', quantity: 1, unitPrice: selectedOrder.totalAmount || 0 }]
+                        });
+                      } else {
+                        setFormData({ ...formData, workOrderId: value });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar orden" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workOrders.map((order) => (
+                        <SelectItem key={order.id} value={order.id}>
+                          {order.orderNumber} - ₲ {order.totalAmount?.toLocaleString('es-PY') || '0'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Fecha Vencimiento *</label>
+                  <Input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1">Cliente *</label>
-                <Select
-                  value={formData.clientId}
-                  onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                <label className="block text-sm font-medium mb-2">Items de la Factura *</label>
+                {formData.items.map((item, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 mb-2">
+                    <div className="col-span-6">
+                      <Input
+                        type="text"
+                        placeholder="Descripción"
+                        value={item.description}
+                        onChange={(e) => {
+                          const newItems = [...formData.items];
+                          newItems[index].description = e.target.value;
+                          setFormData({ ...formData, items: newItems });
+                        }}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        type="number"
+                        placeholder="Cant."
+                        value={item.quantity}
+                        min={1}
+                        onChange={(e) => {
+                          const newItems = [...formData.items];
+                          newItems[index].quantity = parseInt(e.target.value) || 1;
+                          setFormData({ ...formData, items: newItems });
+                        }}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number"
+                        placeholder="Precio"
+                        value={item.unitPrice === 0 ? '' : item.unitPrice}
+                        onChange={(e) => {
+                          const newItems = [...formData.items];
+                          newItems[index].unitPrice = parseFloat(e.target.value) || 0;
+                          setFormData({ ...formData, items: newItems });
+                        }}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      {formData.items.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newItems = formData.items.filter((_, i) => i !== index);
+                            setFormData({ ...formData, items: newItems });
+                          }}
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData({ ...formData, items: [...formData.items, { description: '', quantity: 1, unitPrice: 0 }] })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  + Agregar Item
+                </Button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Orden de Trabajo (opcional)</label>
-                <Select
-                  value={formData.workOrderId}
-                  onValueChange={(value) => {
-                    const selectedOrder = workOrders.find(order => order.id === value);
-                    if (selectedOrder) {
-                      const subtotal = selectedOrder.totalAmount || 0;
-                      const tax = subtotal * 0.1;
-                      setFormData({
-                        ...formData,
-                        workOrderId: value,
-                        clientId: selectedOrder.clientId || formData.clientId,
-                        subtotal,
-                        tax,
-                        total: subtotal + tax
-                      });
-                    } else {
-                      setFormData({ ...formData, workOrderId: value });
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar orden" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workOrders.map((order) => (
-                      <SelectItem key={order.id} value={order.id}>
-                        {order.orderNumber} - {order.description?.substring(0, 30)} (₲ {order.totalAmount?.toLocaleString('es-PY') || '0'})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">IVA (%)</label>
+                  <Input
+                    type="number"
+                    value={formData.taxRate}
+                    onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
+                    min={0}
+                    max={100}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Subtotal</label>
+                  <Input
+                    type="text"
+                    value={`₲ ${formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toLocaleString('es-PY')}`}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Total (con IVA)</label>
+                  <Input
+                    type="text"
+                    value={`₲ ${(formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0) * (1 + formData.taxRate / 100)).toLocaleString('es-PY')}`}
+                    readOnly
+                    className="bg-gray-100 font-semibold"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Subtotal (₲) *</label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={formData.subtotal === 0 ? '' : formData.subtotal}
-                  onChange={(e) => {
-                    const subtotal = e.target.value === '' ? 0 : Number(e.target.value);
-                    const tax = subtotal * 0.1; // 10% tax
-                    setFormData({
-                      ...formData,
-                      subtotal,
-                      tax,
-                      total: subtotal + tax
-                    });
-                  }}
-                  readOnly={!!formData.workOrderId}
-                  className={formData.workOrderId ? 'bg-gray-100' : ''}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">IVA (₲)</label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={formData.tax}
-                  readOnly
-                  className="bg-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Total (₲) *</label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={formData.total}
-                  readOnly
-                  className="bg-gray-100 font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Estado</label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Borrador</SelectItem>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="paid">Pagado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="md:col-span-2 flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"
