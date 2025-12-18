@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface WorkOrder {
   id: string;
@@ -67,14 +68,12 @@ export default function WorkOrdersPage() {
   const fetchClientsAndVehicles = async () => {
     try {
       const [clientsRes, vehiclesRes] = await Promise.all([
-        fetch('http://localhost:3001/api/clients?limit=1000'),
-        fetch('http://localhost:3001/api/vehicles?limit=1000')
+        api.get('/clients?limit=1000'),
+        api.get('/vehicles?limit=1000')
       ]);
-      const clientsData = await clientsRes.json();
-      const vehiclesData = await vehiclesRes.json();
 
-      if (clientsData.success) setClients(clientsData.data);
-      if (vehiclesData.success) setVehicles(vehiclesData.data);
+      if (clientsRes.data.success) setClients(clientsRes.data.data);
+      if (vehiclesRes.data.success) setVehicles(vehiclesRes.data.data);
     } catch (error) {
       console.error('Error fetching clients/vehicles:', error);
     }
@@ -88,11 +87,10 @@ export default function WorkOrdersPage() {
         params.append('status', statusFilter);
       }
 
-      const response = await fetch(`http://localhost:3001/api/work-orders?${params}`);
-      const data = await response.json();
+      const response = await api.get(`/work-orders?${params}`);
 
-      if (data.success) {
-        setWorkOrders(data.data);
+      if (response.data.success) {
+        setWorkOrders(response.data.data);
       } else {
         toast.error('Error al cargar órdenes de trabajo');
       }
@@ -106,18 +104,13 @@ export default function WorkOrdersPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/work-orders/${orderId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      const result = await response.json();
+      const response = await api.put(`/work-orders/${orderId}`, { status: newStatus });
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Estado actualizado exitosamente');
         fetchWorkOrders();
       } else {
-        toast.error(result.message || 'Error al actualizar estado');
+        toast.error(response.data.message || 'Error al actualizar estado');
       }
     } catch (error) {
       console.error('Error updating status:', error);
@@ -134,14 +127,9 @@ export default function WorkOrdersPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/work-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
+      const response = await api.post('/work-orders', formData);
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Orden de trabajo creada exitosamente');
         setShowCreateForm(false);
         setFormData({
@@ -153,7 +141,7 @@ export default function WorkOrdersPage() {
         });
         fetchWorkOrders();
       } else {
-        toast.error(result.message || 'Error al crear orden');
+        toast.error(response.data.message || 'Error al crear orden');
       }
     } catch (error) {
       console.error('Error creating work order:', error);

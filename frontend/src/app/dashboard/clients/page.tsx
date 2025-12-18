@@ -26,6 +26,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -69,11 +70,10 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/clients');
-      const data = await response.json();
+      const response = await api.get('/clients');
 
-      if (data.success) {
-        setClients(data.data);
+      if (response.data.success) {
+        setClients(response.data.data);
       } else {
         toast.error('Error al cargar clientes');
       }
@@ -88,31 +88,21 @@ export default function ClientsPage() {
   const onSubmit = async (data: ClientFormData) => {
     try {
       if (editingClient) {
-        const response = await fetch(`http://localhost:3001/api/clients/${editingClient.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        const result = await response.json();
+        const response = await api.put(`/clients/${editingClient.id}`, data);
 
-        if (result.success) {
+        if (response.data.success) {
           toast.success('Cliente actualizado exitosamente');
         } else {
-          toast.error(result.message || 'Error al actualizar cliente');
+          toast.error(response.data.message || 'Error al actualizar cliente');
           return;
         }
       } else {
-        const response = await fetch('http://localhost:3001/api/clients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        const result = await response.json();
+        const response = await api.post('/clients', data);
 
-        if (result.success) {
+        if (response.data.success) {
           toast.success('Cliente creado exitosamente');
         } else {
-          toast.error(result.message || 'Error al crear cliente');
+          toast.error(response.data.message || 'Error al crear cliente');
           return;
         }
       }
@@ -141,16 +131,13 @@ export default function ClientsPage() {
   const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de eliminar este cliente?')) {
       try {
-        const response = await fetch(`http://localhost:3001/api/clients/${id}`, {
-          method: 'DELETE',
-        });
-        const result = await response.json();
+        const response = await api.delete(`/clients/${id}`);
 
-        if (result.success) {
+        if (response.data.success) {
           toast.success('Cliente eliminado exitosamente');
           fetchClients();
         } else {
-          toast.error(result.message || 'Error al eliminar cliente');
+          toast.error(response.data.message || 'Error al eliminar cliente');
         }
       } catch (error) {
         console.error('Error deleting client:', error);

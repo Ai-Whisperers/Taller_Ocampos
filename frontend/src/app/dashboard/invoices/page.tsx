@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface Invoice {
   id: string;
@@ -69,14 +70,12 @@ export default function InvoicesPage() {
   const fetchClientsAndOrders = async () => {
     try {
       const [clientsRes, ordersRes] = await Promise.all([
-        fetch('http://localhost:3001/api/clients?limit=1000'),
-        fetch('http://localhost:3001/api/work-orders?limit=1000')
+        api.get('/clients?limit=1000'),
+        api.get('/work-orders?limit=1000')
       ]);
-      const clientsData = await clientsRes.json();
-      const ordersData = await ordersRes.json();
 
-      if (clientsData.success) setClients(clientsData.data);
-      if (ordersData.success) setWorkOrders(ordersData.data);
+      if (clientsRes.data.success) setClients(clientsRes.data.data);
+      if (ordersRes.data.success) setWorkOrders(ordersRes.data.data);
     } catch (error) {
       console.error('Error fetching clients/orders:', error);
     }
@@ -85,8 +84,8 @@ export default function InvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/invoices');
-      const data = await response.json();
+      const response = await api.get('/invoices');
+      const data = response.data;
 
       if (data.success) {
         const mappedInvoices = data.data.map((inv: any) => ({
@@ -151,14 +150,9 @@ export default function InvoicesPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
+      const response = await api.post('/invoices', formData);
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Factura creada exitosamente');
         setShowCreateForm(false);
         setFormData({
@@ -171,7 +165,7 @@ export default function InvoicesPage() {
         });
         fetchInvoices();
       } else {
-        toast.error(result.message || 'Error al crear factura');
+        toast.error(response.data.message || 'Error al crear factura');
       }
     } catch (error) {
       console.error('Error creating invoice:', error);

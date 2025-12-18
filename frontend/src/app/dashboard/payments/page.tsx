@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface Payment {
   id: string;
@@ -67,12 +68,11 @@ export default function PaymentsPage() {
 
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/invoices?limit=1000');
-      const data = await response.json();
+      const response = await api.get('/invoices?limit=1000');
 
-      if (data.success) {
+      if (response.data.success) {
         // Filter pending invoices
-        const pendingInvoices = data.data.filter((inv: any) => inv.status === 'pending' || inv.status === 'draft');
+        const pendingInvoices = response.data.data.filter((inv: any) => inv.status === 'pending' || inv.status === 'draft');
         setInvoices(pendingInvoices);
       }
     } catch (error) {
@@ -83,8 +83,8 @@ export default function PaymentsPage() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/payments');
-      const data = await response.json();
+      const response = await api.get('/payments');
+      const data = response.data;
 
       if (data.success) {
         setPayments(data.data.map((p: any, index: number) => ({
@@ -118,14 +118,9 @@ export default function PaymentsPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
+      const response = await api.post('/payments', formData);
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Pago registrado exitosamente');
         setShowCreateForm(false);
         setFormData({
@@ -137,7 +132,7 @@ export default function PaymentsPage() {
         fetchPayments();
         fetchInvoices(); // Refresh to update pending invoices
       } else {
-        toast.error(result.message || 'Error al registrar pago');
+        toast.error(response.data.message || 'Error al registrar pago');
       }
     } catch (error) {
       console.error('Error creating payment:', error);

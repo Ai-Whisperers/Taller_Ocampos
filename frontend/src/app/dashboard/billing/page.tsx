@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface Invoice {
   id: string;
@@ -109,14 +110,12 @@ export default function BillingPage() {
   const fetchClientsAndOrders = async () => {
     try {
       const [clientsRes, ordersRes] = await Promise.all([
-        fetch('http://localhost:3001/api/clients?limit=1000'),
-        fetch('http://localhost:3001/api/work-orders?limit=1000')
+        api.get('/clients?limit=1000'),
+        api.get('/work-orders?limit=1000')
       ]);
-      const clientsData = await clientsRes.json();
-      const ordersData = await ordersRes.json();
 
-      if (clientsData.success) setClients(clientsData.data);
-      if (ordersData.success) setWorkOrders(ordersData.data);
+      if (clientsRes.data.success) setClients(clientsRes.data.data);
+      if (ordersRes.data.success) setWorkOrders(ordersRes.data.data);
     } catch (error) {
       console.error('Error fetching clients/orders:', error);
     }
@@ -126,12 +125,12 @@ export default function BillingPage() {
     try {
       setLoading(true);
       const [invoicesRes, paymentsRes] = await Promise.all([
-        fetch('http://localhost:3001/api/invoices?limit=1000'),
-        fetch('http://localhost:3001/api/payments?limit=1000')
+        api.get('/invoices?limit=1000'),
+        api.get('/payments?limit=1000')
       ]);
 
-      const invoicesData = await invoicesRes.json();
-      const paymentsData = await paymentsRes.json();
+      const invoicesData = invoicesRes.data;
+      const paymentsData = paymentsRes.data;
 
       if (invoicesData.success) {
         // Group payments by invoice
@@ -219,27 +218,21 @@ export default function BillingPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: selectedInvoice.id,
-          amount: paymentFormData.amount,
-          paymentMethod: paymentFormData.paymentMethod,
-          reference: paymentFormData.reference
-        }),
+      const response = await api.post('/payments', {
+        invoiceId: selectedInvoice.id,
+        amount: paymentFormData.amount,
+        paymentMethod: paymentFormData.paymentMethod,
+        reference: paymentFormData.reference
       });
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Pago registrado exitosamente');
         setShowPaymentDialog(false);
         setSelectedInvoice(null);
         setPaymentFormData({ amount: 0, paymentMethod: 'cash', reference: '' });
         fetchInvoices();
       } else {
-        toast.error(result.message || 'Error al registrar pago');
+        toast.error(response.data.message || 'Error al registrar pago');
       }
     } catch (error) {
       console.error('Error registering payment:', error);
@@ -256,14 +249,9 @@ export default function BillingPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invoiceFormData),
-      });
-      const result = await response.json();
+      const response = await api.post('/invoices', invoiceFormData);
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Factura creada exitosamente');
         setShowCreateInvoiceForm(false);
         setInvoiceFormData({
@@ -276,7 +264,7 @@ export default function BillingPage() {
         });
         fetchInvoices();
       } else {
-        toast.error(result.message || 'Error al crear factura');
+        toast.error(response.data.message || 'Error al crear factura');
       }
     } catch (error) {
       console.error('Error creating invoice:', error);

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface Part {
   id: string;
@@ -56,70 +57,25 @@ export default function InventoryPage() {
         params.append('lowStock', 'true');
       }
 
-      const response = await fetch(`http://localhost:3001/api/inventory?${params}`);
-      const data = await response.json();
+      const response = await api.get(`/inventory/parts?${params}`);
 
-      if (data.success) {
-        setParts(data.data.map((item: any) => ({
+      if (response.data.success) {
+        setParts(response.data.data.map((item: any) => ({
           id: item.id,
           code: item.code,
           name: item.name,
-          category: 'General',
-          brand: '',
+          category: item.category || 'General',
+          brand: item.brand || '',
           stock: item.currentStock,
           minStock: item.minStock,
-          cost: item.unitPrice * 0.6,
-          salePrice: item.unitPrice,
-          supplier: '',
-          location: ''
+          cost: item.costPrice || item.unitPrice * 0.6,
+          salePrice: item.salePrice || item.unitPrice,
+          supplier: item.supplier?.name || '',
+          location: item.location || ''
         })));
-        return;
+      } else {
+        toast.error('Error al cargar inventario');
       }
-
-      // Fallback mock data if API fails
-      const mockParts: Part[] = [
-        {
-          id: '1',
-          code: 'FIL-001',
-          name: 'Filtro de aceite',
-          category: 'Filtros',
-          brand: 'Mann',
-          stock: 15,
-          minStock: 10,
-          cost: 25000,
-          salePrice: 45000,
-          supplier: 'Repuestos SA',
-          location: 'A1-B2',
-        },
-        {
-          id: '2',
-          code: 'ACE-001',
-          name: 'Aceite 10W40',
-          category: 'Lubricantes',
-          brand: 'Castrol',
-          stock: 5,
-          minStock: 20,
-          cost: 35000,
-          salePrice: 55000,
-          supplier: 'Lubricantes PY',
-          location: 'B2-C1',
-        },
-        {
-          id: '3',
-          code: 'PAS-001',
-          name: 'Pastillas de freno',
-          category: 'Frenos',
-          brand: 'Bosch',
-          stock: 8,
-          minStock: 5,
-          cost: 85000,
-          salePrice: 120000,
-          supplier: 'Repuestos SA',
-          location: 'C3-D1',
-        },
-      ];
-
-      setParts(mockParts);
     } catch (error) {
       console.error('Error fetching parts:', error);
       toast.error('Error al cargar inventario');
@@ -130,18 +86,13 @@ export default function InventoryPage() {
 
   const handleStockUpdate = async (partId: string, newStock: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/inventory/${partId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentStock: newStock }),
-      });
-      const result = await response.json();
+      const response = await api.put(`/inventory/parts/${partId}`, { currentStock: newStock });
 
-      if (result.success) {
+      if (response.data.success) {
         toast.success('Stock actualizado exitosamente');
         fetchParts();
       } else {
-        toast.error(result.message || 'Error al actualizar stock');
+        toast.error(response.data.message || 'Error al actualizar stock');
       }
     } catch (error) {
       console.error('Error updating stock:', error);
@@ -158,14 +109,20 @@ export default function InventoryPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/inventory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
+      // Map frontend form fields to backend expected fields
+      const partData = {
+        code: formData.code,
+        name: formData.name,
+        description: formData.description,
+        currentStock: formData.currentStock,
+        minStock: formData.minStock,
+        costPrice: formData.unitPrice * 0.6, // Estimate cost as 60% of sale price
+        salePrice: formData.unitPrice,
+      };
 
-      if (result.success) {
+      const response = await api.post('/inventory/parts', partData);
+
+      if (response.data.success) {
         toast.success('Repuesto creado exitosamente');
         setShowCreateForm(false);
         setFormData({
@@ -178,7 +135,7 @@ export default function InventoryPage() {
         });
         fetchParts();
       } else {
-        toast.error(result.message || 'Error al crear repuesto');
+        toast.error(response.data.message || 'Error al crear repuesto');
       }
     } catch (error) {
       console.error('Error creating item:', error);
