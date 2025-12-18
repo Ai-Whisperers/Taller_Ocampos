@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Taller Mecánico - Sistema de Gestión',
   description: 'Sistema completo para la gestión de talleres mecánicos',
+  // Build version: 2025-12-18
 }
 
 export default function RootLayout({
