@@ -84,7 +84,12 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setLoading(true);
-      const { confirmPassword, ...registerData } = data;
+      const { confirmPassword, phone, ...rest } = data;
+      // Only include phone if it has a value
+      const registerData = {
+        ...rest,
+        ...(phone && phone.trim() ? { phone: phone.trim() } : {}),
+      };
       await registerUser(registerData);
     } catch (error) {
       console.error('Registration error:', error);

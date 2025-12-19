@@ -64,11 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.setItem('token', token);
       setUser(user);
-      toast.success('Login successful!');
+      toast.success('¡Bienvenido de nuevo!');
       router.push('/dashboard');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
+      // Error toast is shown by API interceptor, just rethrow
       throw error;
     }
   };
@@ -80,11 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.setItem('token', token);
       setUser(user);
-      toast.success('Registration successful!');
+      toast.success('¡Cuenta creada exitosamente!');
       router.push('/dashboard');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
+      // Error toast is shown by API interceptor, just rethrow
       throw error;
     }
   };
@@ -93,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
     setUser(null);
     router.push('/login');
-    toast.success('Logged out successfully');
+    toast.success('Sesión cerrada');
   };
 
   const updateUser = (updatedUser: User) => {
