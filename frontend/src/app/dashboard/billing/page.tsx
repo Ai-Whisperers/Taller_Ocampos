@@ -307,7 +307,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Facturado</p>
-              <p className="text-2xl font-bold">₲ {stats.totalBilled.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.totalBilled || 0).toLocaleString('es-PY')}</p>
             </div>
             <FileText className="h-8 w-8 text-blue-500" />
           </div>
@@ -316,7 +316,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Recibido</p>
-              <p className="text-2xl font-bold">₲ {stats.totalReceived.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.totalReceived || 0).toLocaleString('es-PY')}</p>
             </div>
             <Check className="h-8 w-8 text-green-500" />
           </div>
@@ -325,7 +325,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Por Cobrar</p>
-              <p className="text-2xl font-bold">₲ {stats.pending.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.pending || 0).toLocaleString('es-PY')}</p>
             </div>
             <Clock className="h-8 w-8 text-yellow-500" />
           </div>
@@ -334,7 +334,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Vencido</p>
-              <p className="text-2xl font-bold">₲ {stats.overdue.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.overdue || 0).toLocaleString('es-PY')}</p>
             </div>
             <DollarSign className="h-8 w-8 text-red-500" />
           </div>

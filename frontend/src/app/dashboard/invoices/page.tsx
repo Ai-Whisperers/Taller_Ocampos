@@ -198,7 +198,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Facturado</p>
-              <p className="text-2xl font-bold">₲ {stats.totalBilled.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.totalBilled || 0).toLocaleString('es-PY')}</p>
             </div>
             <FileText className="h-8 w-8 text-blue-500" />
           </div>
@@ -207,7 +207,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold">₲ {stats.pending.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.pending || 0).toLocaleString('es-PY')}</p>
             </div>
             <DollarSign className="h-8 w-8 text-yellow-500" />
           </div>
@@ -216,7 +216,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Vencidas</p>
-              <p className="text-2xl font-bold">₲ {stats.overdue.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(stats.overdue || 0).toLocaleString('es-PY')}</p>
             </div>
             <DollarSign className="h-8 w-8 text-red-500" />
           </div>
@@ -464,7 +464,7 @@ export default function InvoicesPage() {
                     <TableCell>{invoice.clientName}</TableCell>
                     <TableCell>{invoice.workOrderNumber}</TableCell>
                     <TableCell className="font-semibold">
-                      ₲ {invoice.amount.toLocaleString('es-PY')}
+                      ₲ {(invoice.amount || 0).toLocaleString('es-PY')}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusConfig[invoice.status]?.color || 'bg-gray-100 text-gray-700'}>

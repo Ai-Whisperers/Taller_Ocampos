@@ -174,7 +174,7 @@ export default function PaymentsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Recibido</p>
-              <p className="text-2xl font-bold">₲ {totalReceived.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(totalReceived || 0).toLocaleString('es-PY')}</p>
             </div>
             <Check className="h-8 w-8 text-green-500" />
           </div>
@@ -183,7 +183,7 @@ export default function PaymentsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold">₲ {pendingAmount.toLocaleString('es-PY')}</p>
+              <p className="text-2xl font-bold">₲ {(pendingAmount || 0).toLocaleString('es-PY')}</p>
             </div>
             <Clock className="h-8 w-8 text-yellow-500" />
           </div>
@@ -343,7 +343,7 @@ export default function PaymentsPage() {
                     <TableCell>{payment.invoiceNumber}</TableCell>
                     <TableCell>{payment.clientName}</TableCell>
                     <TableCell className="font-semibold">
-                      ₲ {payment.amount.toLocaleString('es-PY')}
+                      ₲ {(payment.amount || 0).toLocaleString('es-PY')}
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">

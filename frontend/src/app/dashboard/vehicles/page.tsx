@@ -396,7 +396,7 @@ export default function VehiclesPage() {
                     </TableCell>
                     <TableCell>{vehicle.year}</TableCell>
                     <TableCell>{vehicle.licensePlate}</TableCell>
-                    <TableCell>{vehicle.mileage.toLocaleString()} km</TableCell>
+                    <TableCell>{(vehicle.mileage || 0).toLocaleString()} km</TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <User className="h-4 w-4 mr-1 text-gray-400" />

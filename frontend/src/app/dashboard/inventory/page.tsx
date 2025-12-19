@@ -68,8 +68,8 @@ export default function InventoryPage() {
           brand: item.brand || '',
           stock: item.currentStock,
           minStock: item.minStock,
-          cost: item.costPrice || item.unitPrice * 0.6,
-          salePrice: item.salePrice || item.unitPrice,
+          cost: item.costPrice || (item.unitPrice ? item.unitPrice * 0.6 : 0),
+          salePrice: item.salePrice || item.unitPrice || 0,
           supplier: item.supplier?.name || '',
           location: item.location || ''
         })));
@@ -324,9 +324,9 @@ export default function InventoryPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>₲ {part.cost.toLocaleString('es-PY')}</TableCell>
+                    <TableCell>₲ {(part.cost || 0).toLocaleString('es-PY')}</TableCell>
                     <TableCell className="font-semibold">
-                      ₲ {part.salePrice.toLocaleString('es-PY')}
+                      ₲ {(part.salePrice || 0).toLocaleString('es-PY')}
                     </TableCell>
                     <TableCell>{part.location}</TableCell>
                     <TableCell>

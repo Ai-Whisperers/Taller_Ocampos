@@ -350,7 +350,7 @@ export default function WorkOrdersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        ₲ {order.totalAmount.toLocaleString('es-PY')}
+                        ₲ {(order.totalAmount || 0).toLocaleString('es-PY')}
                       </TableCell>
                       <TableCell>
                         {new Date(order.createdAt).toLocaleDateString('es-PY')}
