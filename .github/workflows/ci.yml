@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '20.x'
 
 jobs:
   # Backend Tests
@@ -67,7 +67,7 @@ jobs:
           NODE_ENV: test
 
       - name: Upload backend coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage
@@ -106,7 +106,7 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:3001/api
 
       - name: Upload frontend coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
           path: frontend/coverage
@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload E2E test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: frontend/playwright-report
