@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, userEvent } from '../../../tests/utils/test-utils';
 import DashboardLayout from './DashboardLayout';
 
