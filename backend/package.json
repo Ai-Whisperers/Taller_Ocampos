@@ -18,6 +18,8 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "test": "jest",
     "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathPattern=unit",
     "test:integration": "jest --testPathPattern=integration"
